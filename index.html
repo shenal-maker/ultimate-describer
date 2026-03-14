@@ -4,374 +4,391 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ultimate describer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#FAFAF8;--surface:#FFFFFF;--border:#E8E8E5;
+  --bg:#F9F9F7;--surface:#fff;--border:#E8E8E5;
   --txt:#1A1A18;--txt2:#6B7280;--txt3:#9CA3AF;
-  --accent:#D97706;--success:#059669;--warn:#D97706;--err:#DC2626;
-  --mono:'JetBrains Mono','Fira Code',monospace;
+  --a:#2563EB;--b:#D97706;
+  --mono:'JetBrains Mono',monospace;
 }
-body{background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
-.container{max-width:1100px;margin:0 auto;padding:24px 20px}
-header{margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-header h1{font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:-0.02em;color:var(--txt)}
-header p{font-size:12px;color:var(--txt3);margin-top:3px}
-.layout{display:flex;gap:24px;align-items:flex-start}
-.panel-left{width:350px;flex-shrink:0}
-.panel-right{flex:1;min-width:0;display:none}
-.panel-right.visible{display:block}
-label{display:block;font-size:12px;font-weight:500;color:var(--txt2);margin-bottom:5px;letter-spacing:0.01em}
-textarea,input{width:100%;border:1px solid var(--border);border-radius:6px;padding:9px 11px;font-family:inherit;font-size:13px;color:var(--txt);background:var(--surface);outline:none;transition:border-color 0.15s}
-textarea:focus,input:focus{border-color:var(--accent)}
-textarea{resize:vertical;line-height:1.5}
-.field{margin-bottom:14px}
-.field-row{display:flex;gap:10px}
-.field-row .field{flex:1}
-details summary{font-size:12px;color:var(--txt3);cursor:pointer;padding:4px 0;user-select:none}
-details summary:hover{color:var(--txt2)}
-details[open] summary{color:var(--txt2);margin-bottom:8px}
-button#analyzeBtn{width:100%;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;transition:all 0.15s;margin-top:4px}
-button#analyzeBtn:hover:not(:disabled){background:var(--accent);border-color:var(--accent);color:#fff}
-button#analyzeBtn:disabled{opacity:0.5;cursor:not-allowed}
-.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,0.15);border-top-color:var(--txt);border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.error-box{background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:12px 14px;color:var(--err);font-size:13px;margin-bottom:16px}
-.section{margin-bottom:28px}
-.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--txt3);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-/* VAE diagram */
-#vaeDiagram{width:100%;overflow:hidden;border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:16px}
-/* Claims chips */
-.claim-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:4px;font-size:12px;font-family:var(--mono);margin:3px 3px 3px 0;cursor:default;position:relative}
-.claim-chip:hover .chip-tip{display:block}
-.chip-tip{display:none;position:absolute;top:calc(100% + 5px);left:0;z-index:10;background:var(--txt);color:#fff;font-size:11px;border-radius:5px;padding:7px 10px;width:220px;line-height:1.4;pointer-events:none}
-.chip-tip::before{content:'';position:absolute;top:-4px;left:10px;width:8px;height:8px;background:var(--txt);transform:rotate(45deg)}
-.chip-bits{font-weight:600}
-.chip-high{background:#D1FAE5;border-bottom:2px solid #059669;color:#065F46}
-.chip-mid{background:#FEF3C7;border-bottom:2px solid #D97706;color:#92400E}
-.chip-low{background:#F3F4F6;border-bottom:2px solid #D1D5DB;color:#374151}
-/* Funnel */
-#funnel{width:100%}
-.funnel-row{display:flex;align-items:center;gap:10px;margin-bottom:5px}
-.funnel-label-left{font-size:11px;color:var(--txt2);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:160px;max-width:160px;text-align:right}
-.funnel-bar-wrap{flex:1;height:22px;background:#F3F4F6;border-radius:3px;overflow:hidden}
-.funnel-bar{height:100%;border-radius:3px;transition:width 0.3s}
-.funnel-label-right{font-size:11px;font-family:var(--mono);color:var(--txt2);white-space:nowrap;min-width:90px}
-/* Radar */
-.radar-wrap{display:flex;justify-content:center}
-canvas#radarChart{max-width:280px;max-height:280px}
-/* Suggestions */
-.sug-group{margin-bottom:20px}
-.sug-group-label{font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.sug-group-label::before{content:'';display:inline-block;width:3px;height:14px;border-radius:2px}
-.sug-within .sug-group-label::before{background:var(--success)}
-.sug-prompt .sug-group-label::before{background:#3B82F6}
-.sug-item{border:1px solid var(--border);border-radius:6px;background:var(--surface);margin-bottom:8px;overflow:hidden}
-.sug-item summary{padding:10px 12px;cursor:pointer;font-size:13px;font-weight:500;color:var(--txt);list-style:none;display:flex;justify-content:space-between;align-items:center;user-select:none}
-.sug-item summary:hover{background:#F9F9F7}
-.sug-item summary::marker,.sug-item summary::-webkit-details-marker{display:none}
-.sug-item[open] summary{border-bottom:1px solid var(--border)}
-.sug-body{padding:10px 12px;font-size:12px;color:var(--txt2);line-height:1.6}
-.bit-badge{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;flex-shrink:0}
-.badge-within{background:#D1FAE5;color:#065F46}
-.badge-prompt{background:#DBEAFE;color:#1E40AF}
-.use-tags{margin-top:7px;display:flex;gap:5px;flex-wrap:wrap}
-.use-tag{font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);color:var(--txt3)}
-.use-tag.on{background:#EFF6FF;color:#3B82F6;border-color:#BFDBFE}
-/* Score row */
-.score-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-.score-card{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:12px 14px}
-.sc-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--txt3);margin-bottom:4px}
-.sc-val{font-family:var(--mono);font-size:22px;font-weight:600;line-height:1}
-.sc-sub{font-size:11px;color:var(--txt3);margin-top:3px}
-.c-green{color:var(--success)}.c-amber{color:var(--warn)}.c-red{color:var(--err)}.c-blue{color:#3B82F6}.c-muted{color:var(--txt3)}
-@media(max-width:700px){.layout{flex-direction:column}.panel-left{width:100%}.field-row{flex-direction:column}}
+body{background:var(--bg);color:var(--txt);font-family:Inter,sans-serif;font-size:13px;line-height:1.6;min-height:100vh}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 24px}
+header{border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:28px;display:flex;align-items:baseline;gap:14px}
+h1{font-family:var(--mono);font-size:15px;font-weight:600;letter-spacing:-0.02em}
+.sub{font-size:11px;color:var(--txt3)}
+
+/* layout */
+.layout{display:flex;gap:22px;align-items:flex-start}
+.sidebar{width:280px;flex-shrink:0}
+.main{flex:1;min-width:0}
+
+/* inputs */
+.field{margin-bottom:10px}
+label{display:block;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:4px}
+.la{color:var(--a)}.lb{color:var(--b)}
+textarea{width:100%;border:1px solid var(--border);border-radius:5px;padding:8px 10px;font-family:var(--mono);font-size:10px;color:var(--txt);background:var(--surface);outline:none;resize:vertical;line-height:1.5}
+textarea:focus{border-color:var(--txt3)}
+.vs{text-align:center;font-size:10px;color:var(--txt3);letter-spacing:.1em;padding:6px 0}
+btn,button{display:block;width:100%;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:5px;font-family:inherit;font-size:12px;font-weight:500;color:var(--txt);cursor:pointer;transition:all .15s;margin-top:6px}
+button:hover{background:var(--txt);color:#fff;border-color:var(--txt)}
+.err{background:#FEF2F2;border:1px solid #FECACA;border-radius:5px;padding:8px 10px;color:#DC2626;font-size:11px;margin-top:8px;display:none}
+
+/* section */
+.sec{margin-bottom:30px}
+.sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--txt3);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:14px}
+.hidden{display:none}
+
+/* text heat panels */
+.heat-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.heat-panel{border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:14px}
+.heat-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+.heat-label span{display:inline-block;padding:1px 7px;border-radius:3px;font-family:var(--mono)}
+.hl-a{background:#DBEAFE;color:var(--a)}.hl-b{background:#FEF3C7;color:var(--b)}
+.sentence{display:block;border-radius:3px;padding:2px 4px;margin-bottom:3px;line-height:1.6;font-size:13px;cursor:default;transition:opacity .1s}
+.sentence:hover{opacity:.8}
+
+/* legend */
+.heat-legend{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--txt3)}
+.legend-swatch{width:12px;height:12px;border-radius:2px}
+
+/* dual curve */
+#curveCanvas{width:100%;border:1px solid var(--border);border-radius:6px;background:var(--surface)}
+
+/* precision triangle */
+.tri-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center}
+#triCanvas{width:100%}
+.tri-legend{font-size:12px}
+.tri-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tri-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.tri-axis{font-size:11px;color:var(--txt2);margin-bottom:2px}
+.tri-bar-bg{height:4px;background:#F3F4F6;border-radius:2px;width:160px;position:relative}
+.tri-bar-a{height:4px;border-radius:2px;background:var(--a);position:absolute;top:0;left:0}
+.tri-bar-b{height:4px;border-radius:2px;background:var(--b);opacity:.7;position:absolute;bottom:-5px;left:0}
+
+/* tooltip */
+.tip{position:fixed;background:#1A1A18;color:#fff;font-size:11px;padding:6px 10px;border-radius:4px;pointer-events:none;display:none;z-index:100;max-width:220px;line-height:1.5}
 </style>
 </head>
 <body>
-<div class="container">
+<div class="wrap">
   <header>
     <h1>ultimate describer</h1>
-    <p>paste analysis json from claude &mdash; get precision scores and visualizations</p>
+    <span class="sub">comparative precision visualization</span>
   </header>
-
   <div class="layout">
-    <!-- INPUT PANEL -->
-    <div class="panel-left">
+    <!-- sidebar -->
+    <div class="sidebar">
       <div class="field">
-        <label for="jsonInput">analysis json</label>
-        <textarea id="jsonInput" rows="18" placeholder='Paste the JSON from Claude here...&#10;&#10;Ask Claude:&#10;"Analyze this description and return the description-precision JSON"&#10;&#10;Then paste the result here.' style="font-family:var(--mono);font-size:11px;line-height:1.5"></textarea>
+        <label class="la">A — baseline</label>
+        <textarea id="jsonA" rows="10" placeholder='{"label":"A","description":"...","sentences":[{"text":"...","heat":0.2,"type":"denotative"}],"precision":{"denotative":0.5,"connotative":0.5,"pragmatic":0.5},"curve":[{"label":"start","pct":100}]}'></textarea>
       </div>
-      <button id="analyzeBtn" onclick="loadJSON()">load &rarr;</button>
+      <div class="vs">vs</div>
+      <div class="field">
+        <label class="lb">B — with skill</label>
+        <textarea id="jsonB" rows="10" placeholder='{"label":"B","description":"...","sentences":[...],...}'></textarea>
+      </div>
+      <button onclick="run()">compare &#8594;</button>
+      <div class="err" id="err"></div>
+      <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--txt3);line-height:1.8">
+          <div style="margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">json schema</div>
+          <code style="font-family:var(--mono);font-size:9px;color:var(--txt3)">
+            label · description · sentences[]<br>
+            &nbsp;↳ text · heat (0–1) · type<br>
+            &nbsp;&nbsp;&nbsp;(denotative|connotative|pragmatic)<br>
+            precision · denotative · connotative<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;· pragmatic<br>
+            curve[] · label · pct (0–100)
+          </code>
+        </div>
+      </div>
     </div>
 
-    <!-- RESULTS PANEL -->
-    <div class="panel-right" id="resultsPanel">
-      <div id="errorBox" class="error-box" style="display:none"></div>
+    <!-- main -->
+    <div class="main hidden" id="results">
 
-      <!-- VAE Architecture Diagram -->
-      <div class="section">
-        <div class="section-title">encoding pipeline</div>
-        <div id="vaeDiagram"></div>
-      </div>
-
-      <!-- Description with claim chips -->
-      <div class="section">
-        <div class="section-title">claims</div>
-        <div id="claimsSection"></div>
-      </div>
-
-      <!-- Funnel -->
-      <div class="section">
-        <div class="section-title">specificity funnel</div>
-        <div id="funnel"></div>
-      </div>
-
-      <!-- Radar -->
-      <div class="section">
-        <div class="section-title">scores</div>
-        <div class="score-row" id="scoreCards"></div>
-        <div class="radar-wrap" style="margin-top:16px">
-          <canvas id="radarChart" width="280" height="280"></canvas>
+      <!-- text heat -->
+      <div class="sec">
+        <div class="sec-title">sentence precision heat</div>
+        <div class="heat-grid" id="heatGrid"></div>
+        <div class="heat-legend">
+          <div class="legend-item"><div class="legend-swatch" style="background:#FDE68A"></div>denotative (referent)</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#A7F3D0"></div>connotative (tonal)</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#BFDBFE"></div>pragmatic (goal)</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#F3F4F6;border:1px solid #E5E7EB"></div>generic</div>
         </div>
       </div>
 
-      <!-- Suggestions -->
-      <div class="section">
-        <div class="section-title">rewrite suggestions</div>
-        <div id="suggestionsSection"></div>
+      <!-- dual curve -->
+      <div class="sec">
+        <div class="sec-title">discrimination curve — % corpus remaining · shaded gap = &#916;I</div>
+        <canvas id="curveCanvas" height="220"></canvas>
       </div>
+
+      <!-- precision triangle -->
+      <div class="sec">
+        <div class="sec-title">precision triangle — denotative · connotative · pragmatic</div>
+        <div class="tri-grid">
+          <canvas id="triCanvas" height="260"></canvas>
+          <div class="tri-legend" id="triLegend"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
-<script>
-let radarChartInstance = null;
+<div class="tip" id="tip"></div>
 
-function loadJSON() {
-  const raw = document.getElementById('jsonInput').value.trim();
-  if (!raw) { alert('Paste the JSON from Claude first.'); return; }
-  document.getElementById('errorBox').style.display = 'none';
-  try {
-    const data = JSON.parse(raw);
-    renderResults(data);
-  } catch (e) {
-    const eb = document.getElementById('errorBox');
-    eb.textContent = 'Invalid JSON: ' + e.message;
-    eb.style.display = 'block';
-    document.getElementById('resultsPanel').classList.add('visible');
+<script>
+let curveChart = null;
+
+function run() {
+  const eb = document.getElementById('err');
+  eb.style.display = 'none';
+  let a, b;
+  try { a = JSON.parse(document.getElementById('jsonA').value.trim()); }
+  catch(e) { eb.textContent = 'A: ' + e.message; eb.style.display = 'block'; return; }
+  try { b = JSON.parse(document.getElementById('jsonB').value.trim()); }
+  catch(e) { eb.textContent = 'B: ' + e.message; eb.style.display = 'block'; return; }
+
+  document.getElementById('results').classList.remove('hidden');
+  renderHeat(a, b);
+  renderCurve(a, b);
+  renderTriangle(a, b);
+}
+
+// ── heat ─────────────────────────────────────────────────────────────────────
+const typeColor = (type, heat) => {
+  const h = Math.max(heat, 0.05);
+  if (type === 'denotative')  return `rgba(251,191,36,${h * 0.7})`;   // amber
+  if (type === 'connotative') return `rgba(52,211,153,${h * 0.6})`;   // green
+  if (type === 'pragmatic')   return `rgba(96,165,250,${h * 0.6})`;   // blue
+  return `rgba(200,200,200,${h * 0.3})`;
+};
+
+function renderHeat(a, b) {
+  const tip = document.getElementById('tip');
+  const panel = (data, tag, tagClass) => {
+    const sentences = (data.sentences || [{ text: data.description || '', heat: 0.5, type: 'denotative' }]);
+    const rows = sentences.map(s => {
+      const bg = typeColor(s.type, s.heat);
+      const label = s.type ? `${s.type} · ${Math.round(s.heat * 100)}% distinctive` : 'generic';
+      return `<span class="sentence" style="background:${bg}"
+        onmouseenter="showTip(event,'${label.replace(/'/g,"&#39;")}')"
+        onmouseleave="hideTip()">${s.text}</span>`;
+    }).join('');
+    return `<div class="heat-panel">
+      <div class="heat-label"><span class="${tagClass}">${tag}</span></div>
+      <div>${rows}</div>
+    </div>`;
+  };
+  document.getElementById('heatGrid').innerHTML =
+    panel(a, a.label || 'A', 'hl-a') +
+    panel(b, b.label || 'B', 'hl-b');
+}
+
+function showTip(e, text) {
+  const t = document.getElementById('tip');
+  t.textContent = text;
+  t.style.display = 'block';
+  t.style.left = (e.clientX + 12) + 'px';
+  t.style.top  = (e.clientY - 28) + 'px';
+}
+function hideTip() { document.getElementById('tip').style.display = 'none'; }
+
+// ── curve ─────────────────────────────────────────────────────────────────────
+function renderCurve(a, b) {
+  const canvas = document.getElementById('curveCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth || 700, H = 220;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const pad = { top: 20, right: 24, bottom: 36, left: 44 };
+  const iW = W - pad.left - pad.right;
+  const iH = H - pad.top - pad.bottom;
+
+  const stepsA = (a.curve || [{ label:'start', pct:100 }]);
+  const stepsB = (b.curve || [{ label:'start', pct:100 }]);
+  const maxN = Math.max(stepsA.length, stepsB.length) - 1;
+
+  const toX = i  => pad.left + (i / Math.max(maxN, 1)) * iW;
+  const toY = pct => pad.top + iH - (pct / 100) * iH;
+
+  // grid
+  ctx.strokeStyle = '#F3F4F6'; ctx.lineWidth = 1;
+  [25, 50, 75, 100].forEach(v => {
+    ctx.beginPath(); ctx.moveTo(pad.left, toY(v)); ctx.lineTo(pad.left + iW, toY(v)); ctx.stroke();
+    ctx.fillStyle = '#9CA3AF'; ctx.font = '9px JetBrains Mono,monospace'; ctx.textAlign = 'right';
+    ctx.fillText(v + '%', pad.left - 5, toY(v) + 3);
+  });
+
+  // axes
+  ctx.strokeStyle = '#E8E8E5'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + iH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top + iH); ctx.lineTo(pad.left + iW, pad.top + iH); ctx.stroke();
+
+  // axis labels
+  ctx.fillStyle = '#9CA3AF'; ctx.font = '9px Inter,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('claims added', pad.left + iW / 2, H - 4);
+  ctx.save(); ctx.translate(11, pad.top + iH / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('% corpus remaining', 0, 0); ctx.restore();
+
+  // shaded gap between A and B
+  ctx.beginPath();
+  stepsA.forEach((s, i) => i === 0 ? ctx.moveTo(toX(i), toY(s.pct)) : ctx.lineTo(toX(i), toY(s.pct)));
+  for (let i = Math.min(stepsB.length, stepsA.length) - 1; i >= 0; i--) {
+    ctx.lineTo(toX(i), toY(stepsB[i].pct));
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(217,119,6,0.08)';
+  ctx.fill();
+
+  // draw curve fn
+  const drawLine = (steps, color) => {
+    ctx.beginPath();
+    steps.forEach((s, i) => {
+      const x = toX(i), y = toY(s.pct);
+      if (i === 0) ctx.moveTo(x, y);
+      else { ctx.lineTo(x, y); }  // stepped
+    });
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+    // dots
+    steps.forEach((s, i) => {
+      ctx.beginPath(); ctx.arc(toX(i), toY(s.pct), 4, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    });
+  };
+
+  drawLine(stepsA, '#2563EB');
+  drawLine(stepsB, '#D97706');
+
+  // labels on last points
+  const labelPt = (steps, color, side) => {
+    const last = steps[steps.length - 1];
+    const x = toX(steps.length - 1), y = toY(last.pct);
+    ctx.fillStyle = color; ctx.font = 'bold 10px Inter'; ctx.textAlign = side === 'l' ? 'right' : 'left';
+    ctx.fillText(side === 'l' ? (a.label || 'A') : (b.label || 'B'), x + (side === 'l' ? -7 : 7), y + 3);
+  };
+  labelPt(stepsA, '#2563EB', 'l');
+  labelPt(stepsB, '#D97706', 'r');
+
+  // ΔI annotation
+  const lastA = stepsA[stepsA.length - 1].pct;
+  const lastB = stepsB[stepsB.length - 1].pct;
+  if (Math.abs(lastA - lastB) > 2) {
+    const midX = toX(Math.min(stepsA.length, stepsB.length) - 1) - 20;
+    const midY = (toY(lastA) + toY(lastB)) / 2;
+    ctx.fillStyle = '#D97706'; ctx.font = '10px Inter'; ctx.textAlign = 'right';
+    ctx.fillText('ΔI', midX, midY);
   }
 }
 
-function renderResults(data) {
-  document.getElementById('resultsPanel').classList.add('visible');
-  renderVAEDiagram(data);
-  renderClaims(data);
-  renderFunnel(data);
-  renderRadar(data);
-  renderSuggestions(data);
-}
+// ── triangle ──────────────────────────────────────────────────────────────────
+function renderTriangle(a, b) {
+  const canvas = document.getElementById('triCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth || 300, H = 260;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
 
-// ─── VAE Diagram ──────────────────────────────────────────────────────────────
-function renderVAEDiagram(data) {
-  const s = data.scores || {};
-  const hasSource = !!(data.source_content);
-  const prompt = data.generating_prompt || '';
-  const spec = (s.specificity || 0).toFixed(1);
-  const eff = (s.efficiency || 0).toFixed(2);
-  const ceil = s.constrained_ceiling;
-  const ceilPct = ceil ? Math.round((s.specificity / ceil) * 100) : null;
+  const cx = W / 2, cy = H / 2 + 10, R = Math.min(W, H) * 0.38;
 
-  const scoreColor = v => v >= 7 ? '#059669' : v >= 4 ? '#D97706' : '#DC2626';
-  const rScore = s.retrieval || 0, dScore = s.display || 0, cScore = s.classification_signal || 0;
-
-  const W = 700, H = 130;
-  const boxW = 90, boxH = 44, r = 6;
-  const box = (x, y, label, sub, color='#E8E8E5', textColor='#1A1A18') =>
-    `<rect x="${x}" y="${y}" width="${boxW}" height="${boxH}" rx="${r}" fill="white" stroke="${color}" stroke-width="1.5"/>
-     <text x="${x+boxW/2}" y="${y+17}" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="${textColor}">${label}</text>
-     ${sub ? `<text x="${x+boxW/2}" y="${y+31}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#9CA3AF">${sub}</text>` : ''}`;
-
-  const arrow = (x1, y, x2, label='', above='') =>
-    `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#D1D5DB" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-     ${above ? `<text x="${(x1+x2)/2}" y="${y-8}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#9CA3AF">${above}</text>` : ''}
-     ${label ? `<text x="${(x1+x2)/2}" y="${y+14}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#9CA3AF">${label}</text>` : ''}`;
-
-  const srcColor = hasSource ? '#3B82F6' : '#D1D5DB';
-  const srcTxt = hasSource ? '#3B82F6' : '#6B7280';
-  const promptTrunc = prompt.length > 22 ? prompt.slice(0,20)+'…' : (prompt || 'encode');
-
-  // Output box positions
-  const outY = 15;
-  const o1x = W - boxW - 10, descX = 280, srcX = 10;
-  const midY = outY + boxH/2;
-
-  // Three output boxes spread vertically
-  const out = (x, y, label, score) =>
-    box(x, y, label, `${score}/10`, scoreColor(score), scoreColor(score));
-
-  const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-  <defs>
-    <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L6,3 z" fill="#D1D5DB"/>
-    </marker>
-  </defs>
-  ${box(srcX, outY, 'source', hasSource?'provided':'none', srcColor, srcTxt)}
-  ${arrow(srcX+boxW, midY, descX-2, '', promptTrunc)}
-  ${box(descX, outY, 'description', '', '#E8E8E5', '#1A1A18')}
-  <text x="${descX+boxW/2}" y="${outY+boxH+14}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#6B7280">${spec} bits</text>
-  <text x="${descX+boxW/2}" y="${outY+boxH+25}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#9CA3AF">${eff} bits/claim${ceilPct ? '  ·  '+ceilPct+'% of ceiling' : ''}</text>
-  ${arrow(descX+boxW, 30, W-boxW*3-52, '', '')}
-  ${arrow(descX+boxW, midY, W-boxW*3-52, '', '')}
-  ${arrow(descX+boxW, H-30, W-boxW*3-52, '', '')}
-  ${out(W-boxW*3-50, 8, 'retrieval', rScore)}
-  ${out(W-boxW*3-50, 43, 'display', dScore)}
-  ${out(W-boxW*3-50, 78, 'classify', cScore)}
-  </svg>`;
-  document.getElementById('vaeDiagram').innerHTML = svg;
-}
-
-// ─── Claims ───────────────────────────────────────────────────────────────────
-function renderClaims(data) {
-  const claims = data.claims || [];
-  const chipClass = bits => bits > 4 ? 'chip-high' : bits >= 1.5 ? 'chip-mid' : 'chip-low';
-
-  const chips = claims.map(c => {
-    const label = c.text.length > 42 ? c.text.slice(0,40)+'…' : c.text;
-    const escaped = c.text.replace(/"/g,'&quot;');
-    const note = (c.note||'').replace(/"/g,'&quot;');
-    return `<span class="claim-chip ${chipClass(c.bits)}" title="">
-      <span>${label}</span>
-      <span class="chip-bits">${(c.bits||0).toFixed(1)}b</span>
-      <span class="chip-tip"><strong>${escaped}</strong><br>${(c.bits||0).toFixed(2)} bits · ${c.verified}<br>${note}</span>
-    </span>`;
-  }).join('');
-
-  document.getElementById('claimsSection').innerHTML =
-    `<div style="margin-bottom:8px;font-size:12px;color:var(--txt3)">${claims.length} atomic claims extracted</div>
-     <div>${chips}</div>`;
-}
-
-// ─── Funnel ───────────────────────────────────────────────────────────────────
-function renderFunnel(data) {
-  const curve = data.curve || [];
-  const universe = data.universe_size || 10000;
-  if (!curve.length) { document.getElementById('funnel').innerHTML = '<p style="color:var(--txt3);font-size:12px">No funnel data.</p>'; return; }
-
-  const sorted = [...curve].sort((a,b) => b.candidate_set - a.candidate_set);
-
-  const colorForPct = pct => {
-    // red (1.0) → amber (0.5) → green (0.0)
-    const r = pct > 0.5 ? 220 : Math.round(5 + (pct*2)*215);
-    const g = pct < 0.5 ? Math.round(pct*2*150) : Math.round(150 + (1-pct)*2*109);
-    return `rgb(${r},${g},70)`;
-  };
-
-  const rows = sorted.map(step => {
-    const pct = Math.min(step.candidate_set / universe, 1);
-    const barW = Math.max(pct * 100, 0.5);
-    const label = (step.label||'').length > 43 ? step.label.slice(0,41)+'…' : (step.label||'');
-    const rightLabel = step.candidate_set >= 1000
-      ? (step.candidate_set/1000).toFixed(1)+'k'
-      : step.candidate_set < 1 ? '<1' : Math.round(step.candidate_set).toLocaleString();
-    const pctStr = (pct * 100).toFixed(pct < 0.01 ? 2 : 0) + '%';
-    return `<div class="funnel-row">
-      <div class="funnel-label-left">${label}</div>
-      <div class="funnel-bar-wrap">
-        <div class="funnel-bar" style="width:${barW}%;background:${colorForPct(pct)}"></div>
-      </div>
-      <div class="funnel-label-right">${rightLabel} <span style="color:var(--txt3)">(${pctStr})</span></div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('funnel').innerHTML = rows;
-}
-
-// ─── Radar + Score Cards ──────────────────────────────────────────────────────
-function renderRadar(data) {
-  const s = data.scores || {};
-  const acc = s.accuracy != null ? s.accuracy * 10 : null;
-  const spec = Math.min((s.specificity||0) / 23.3 * 10, 10);
-  const eff = Math.min((s.efficiency||0) / 5 * 10, 10);
-  const ret = s.retrieval || 0;
-  const disp = s.display || 0;
-  const cls = s.classification_signal || 0;
-
-  // Score cards
-  const ceilPct = s.constrained_ceiling ? Math.round((s.specificity / s.constrained_ceiling)*100) : null;
-  const colorClass = v => v === null ? 'c-muted' : v >= 7 ? 'c-green' : v >= 4 ? 'c-amber' : 'c-red';
-
-  document.getElementById('scoreCards').innerHTML = [
-    { label:'Accuracy', val: s.accuracy != null ? (s.accuracy*100).toFixed(0)+'%' : 'N/A', sub: s.accuracy != null ? '' : 'no source', cls: s.accuracy != null ? colorClass(s.accuracy*10) : 'c-muted' },
-    { label:'Specificity', val: (s.specificity||0).toFixed(1), sub: 'bits', cls: colorClass(spec) },
-    { label:'Efficiency', val: (s.efficiency||0).toFixed(2), sub: 'bits/claim', cls: colorClass(eff) },
-    { label:'Ceiling', val: s.constrained_ceiling ? s.constrained_ceiling.toFixed(1) : '—', sub: ceilPct ? ceilPct+'% reached' : 'bits max', cls: 'c-blue' },
-  ].map(c => `<div class="score-card"><div class="sc-label">${c.label}</div><div class="sc-val ${c.cls}">${c.val}</div><div class="sc-sub">${c.sub}</div></div>`).join('');
-
-  const values = [
-    acc !== null ? acc : 0,
-    spec, eff, ret, disp, cls
+  // equilateral triangle vertices (top, bottom-right, bottom-left)
+  const verts = [
+    { x: cx, y: cy - R, label: 'denotative' },
+    { x: cx + R * Math.sin(2 * Math.PI / 3), y: cy - R * Math.cos(2 * Math.PI / 3), label: 'connotative' },
+    { x: cx + R * Math.sin(4 * Math.PI / 3), y: cy - R * Math.cos(4 * Math.PI / 3), label: 'pragmatic' },
   ];
 
-  if (radarChartInstance) radarChartInstance.destroy();
-  const ctx = document.getElementById('radarChart').getContext('2d');
-  radarChartInstance = new Chart(ctx, {
-    type: 'radar',
-    data: {
-      labels: ['Accuracy','Specificity','Efficiency','Retrieval','Display','Classify'],
-      datasets: [{
-        data: values,
-        fill: true,
-        backgroundColor: 'rgba(217,119,6,0.12)',
-        borderColor: '#D97706',
-        borderWidth: 2,
-        pointBackgroundColor: '#D97706',
-        pointRadius: 3
-      }]
-    },
-    options: {
-      responsive: false,
-      scales: {
-        r: {
-          min: 0, max: 10, ticks: { stepSize: 2, font: { size: 10 }, color: '#9CA3AF', backdropColor: 'transparent' },
-          grid: { color: '#E8E8E5' },
-          angleLines: { color: '#E8E8E5' },
-          pointLabels: { font: { size: 11, family: 'Inter' }, color: '#6B7280' }
-        }
-      },
-      plugins: { legend: { display: false } }
-    }
+  // grid triangles
+  [0.25, 0.5, 0.75, 1].forEach(f => {
+    ctx.beginPath();
+    verts.forEach((v, i) => {
+      const x = cx + (v.x - cx) * f, y = cy + (v.y - cy) * f;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.strokeStyle = '#E8E8E5'; ctx.lineWidth = 1; ctx.stroke();
   });
-}
+  // spokes
+  verts.forEach(v => {
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(v.x, v.y);
+    ctx.strokeStyle = '#E8E8E5'; ctx.lineWidth = 1; ctx.stroke();
+  });
 
-// ─── Suggestions ─────────────────────────────────────────────────────────────
-function renderSuggestions(data) {
-  const sug = data.suggestions || {};
-  const within = sug.within_scope || [];
-  const prompt = sug.prompt_level || [];
-
-  const renderGroup = (items, badgeClass, groupClass, groupLabel) => {
-    if (!items.length) return '';
-    const itemsHtml = items.map(s => {
-      const tags = (s.improves||[]).map(t => `<span class="use-tag on">${t}</span>`).join('');
-      const gain = s.bit_gain ? `+${s.bit_gain.toFixed ? s.bit_gain.toFixed(1) : s.bit_gain} bits` : '';
-      return `<details class="sug-item">
-        <summary>${s.change || 'Improvement'}<span class="bit-badge ${badgeClass}">${gain}</span></summary>
-        <div class="sug-body">${s.reason||''}<div class="use-tags">${tags}</div></div>
-      </details>`;
-    }).join('');
-    return `<div class="sug-group ${groupClass}">
-      <div class="sug-group-label">${groupLabel}</div>
-      ${itemsHtml}
-    </div>`;
+  // filled polygon fn
+  const drawPoly = (data, color, alpha) => {
+    const p = data.precision || {};
+    const vals = [p.denotative || 0, p.connotative || 0, p.pragmatic || 0];
+    ctx.beginPath();
+    verts.forEach((v, i) => {
+      const x = cx + (v.x - cx) * vals[i], y = cy + (v.y - cy) * vals[i];
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = color.replace('1)', alpha + ')'); ctx.fill();
+    ctx.strokeStyle = color.replace('rgba', 'rgb').replace(',1)', ')').replace(/,[\d.]+\)$/, ')');
+    ctx.lineWidth = 2; ctx.stroke();
+    // dots
+    verts.forEach((v, i) => {
+      const val = vals[i];
+      const x = cx + (v.x - cx) * val, y = cy + (v.y - cy) * val;
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = color.replace(',1)', ',1)'); ctx.fill();
+    });
   };
 
-  document.getElementById('suggestionsSection').innerHTML =
-    renderGroup(within, 'badge-within', 'sug-within', 'within prompt scope') +
-    renderGroup(prompt, 'badge-prompt', 'sug-prompt', 'prompt-level improvements');
+  drawPoly(a, 'rgba(37,99,235,1)',  '0.12');
+  drawPoly(b, 'rgba(217,119,6,1)',  '0.12');
+
+  // vertex labels
+  ctx.fillStyle = '#6B7280'; ctx.font = '11px Inter';
+  verts.forEach(v => {
+    ctx.textAlign = v.x < cx - 5 ? 'right' : v.x > cx + 5 ? 'left' : 'center';
+    const offY = v.y < cy ? -10 : 14;
+    ctx.fillText(v.label, v.x, v.y + offY);
+  });
+
+  // legend sidebar
+  const pa = a.precision || {}, pb = b.precision || {};
+  const dims = ['denotative','connotative','pragmatic'];
+  const labels = { denotative:'referent narrowing', connotative:'tonal accuracy', pragmatic:'goal achievement' };
+  document.getElementById('triLegend').innerHTML = `
+    <div style="display:flex;gap:14px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:10px;height:10px;border-radius:50%;background:#2563EB"></div>${a.label||'A'}</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:10px;height:10px;border-radius:50%;background:#D97706"></div>${b.label||'B'}</div>
+    </div>
+    ${dims.map(d => `
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">${d} <span style="color:var(--txt2);font-size:9px">· ${labels[d]}</span></div>
+        <div style="position:relative;height:14px;width:160px">
+          <div style="position:absolute;top:0;left:0;height:5px;background:#2563EB;border-radius:2px;width:${(pa[d]||0)*160}px"></div>
+          <div style="position:absolute;top:7px;left:0;height:5px;background:#D97706;border-radius:2px;width:${(pb[d]||0)*160}px;opacity:.8"></div>
+        </div>
+      </div>
+    `).join('')}
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--txt3);line-height:1.8">
+      <div><span style="color:#2563EB;font-weight:600">${a.label||'A'}</span> area: ${triArea(a).toFixed(3)}</div>
+      <div><span style="color:#D97706;font-weight:600">${b.label||'B'}</span> area: ${triArea(b).toFixed(3)}</div>
+      <div style="margin-top:4px">Δ area: ${(triArea(b)-triArea(a)).toFixed(3)}</div>
+    </div>`;
+}
+
+function triArea(d) {
+  const p = d.precision || {};
+  const a = p.denotative || 0, b = p.connotative || 0, c = p.pragmatic || 0;
+  // area of triangle formed by three points on unit equilateral triangle
+  return 0.5 * Math.abs(a * b * Math.sin(2*Math.PI/3) + b * c * Math.sin(2*Math.PI/3) + c * a * Math.sin(2*Math.PI/3));
 }
 </script>
 </body>
