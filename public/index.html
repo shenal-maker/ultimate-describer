@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ultimate describer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAFAF8;--surface:#FFFFFF;--border:#E8E8E5;
+  --txt:#1A1A18;--txt2:#6B7280;--txt3:#9CA3AF;
+  --accent:#D97706;--success:#059669;--warn:#D97706;--err:#DC2626;
+  --mono:'JetBrains Mono','Fira Code',monospace;
+}
+body{background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+.container{max-width:1100px;margin:0 auto;padding:24px 20px}
+header{margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+header h1{font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:-0.02em;color:var(--txt)}
+header p{font-size:12px;color:var(--txt3);margin-top:3px}
+.layout{display:flex;gap:24px;align-items:flex-start}
+.panel-left{width:350px;flex-shrink:0}
+.panel-right{flex:1;min-width:0;display:none}
+.panel-right.visible{display:block}
+label{display:block;font-size:12px;font-weight:500;color:var(--txt2);margin-bottom:5px;letter-spacing:0.01em}
+textarea,input{width:100%;border:1px solid var(--border);border-radius:6px;padding:9px 11px;font-family:inherit;font-size:13px;color:var(--txt);background:var(--surface);outline:none;transition:border-color 0.15s}
+textarea:focus,input:focus{border-color:var(--accent)}
+textarea{resize:vertical;line-height:1.5}
+.field{margin-bottom:14px}
+.field-row{display:flex;gap:10px}
+.field-row .field{flex:1}
+details summary{font-size:12px;color:var(--txt3);cursor:pointer;padding:4px 0;user-select:none}
+details summary:hover{color:var(--txt2)}
+details[open] summary{color:var(--txt2);margin-bottom:8px}
+button#analyzeBtn{width:100%;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;transition:all 0.15s;margin-top:4px}
+button#analyzeBtn:hover:not(:disabled){background:var(--accent);border-color:var(--accent);color:#fff}
+button#analyzeBtn:disabled{opacity:0.5;cursor:not-allowed}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,0.15);border-top-color:var(--txt);border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-box{background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:12px 14px;color:var(--err);font-size:13px;margin-bottom:16px}
+.section{margin-bottom:28px}
+.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--txt3);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+/* VAE diagram */
+#vaeDiagram{width:100%;overflow:hidden;border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:16px}
+/* Claims chips */
+.claim-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:4px;font-size:12px;font-family:var(--mono);margin:3px 3px 3px 0;cursor:default;position:relative}
+.claim-chip:hover .chip-tip{display:block}
+.chip-tip{display:none;position:absolute;top:calc(100% + 5px);left:0;z-index:10;background:var(--txt);color:#fff;font-size:11px;border-radius:5px;padding:7px 10px;width:220px;line-height:1.4;pointer-events:none}
+.chip-tip::before{content:'';position:absolute;top:-4px;left:10px;width:8px;height:8px;background:var(--txt);transform:rotate(45deg)}
+.chip-bits{font-weight:600}
+.chip-high{background:#D1FAE5;border-bottom:2px solid #059669;color:#065F46}
+.chip-mid{background:#FEF3C7;border-bottom:2px solid #D97706;color:#92400E}
+.chip-low{background:#F3F4F6;border-bottom:2px solid #D1D5DB;color:#374151}
+/* Funnel */
+#funnel{width:100%}
+.funnel-row{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.funnel-label-left{font-size:11px;color:var(--txt2);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:160px;max-width:160px;text-align:right}
+.funnel-bar-wrap{flex:1;height:22px;background:#F3F4F6;border-radius:3px;overflow:hidden}
+.funnel-bar{height:100%;border-radius:3px;transition:width 0.3s}
+.funnel-label-right{font-size:11px;font-family:var(--mono);color:var(--txt2);white-space:nowrap;min-width:90px}
+/* Radar */
+.radar-wrap{display:flex;justify-content:center}
+canvas#radarChart{max-width:280px;max-height:280px}
+/* Suggestions */
+.sug-group{margin-bottom:20px}
+.sug-group-label{font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sug-group-label::before{content:'';display:inline-block;width:3px;height:14px;border-radius:2px}
+.sug-within .sug-group-label::before{background:var(--success)}
+.sug-prompt .sug-group-label::before{background:#3B82F6}
+.sug-item{border:1px solid var(--border);border-radius:6px;background:var(--surface);margin-bottom:8px;overflow:hidden}
+.sug-item summary{padding:10px 12px;cursor:pointer;font-size:13px;font-weight:500;color:var(--txt);list-style:none;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.sug-item summary:hover{background:#F9F9F7}
+.sug-item summary::marker,.sug-item summary::-webkit-details-marker{display:none}
+.sug-item[open] summary{border-bottom:1px solid var(--border)}
+.sug-body{padding:10px 12px;font-size:12px;color:var(--txt2);line-height:1.6}
+.bit-badge{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;flex-shrink:0}
+.badge-within{background:#D1FAE5;color:#065F46}
+.badge-prompt{background:#DBEAFE;color:#1E40AF}
+.use-tags{margin-top:7px;display:flex;gap:5px;flex-wrap:wrap}
+.use-tag{font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);color:var(--txt3)}
+.use-tag.on{background:#EFF6FF;color:#3B82F6;border-color:#BFDBFE}
+/* Score row */
+.score-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.score-card{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:12px 14px}
+.sc-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--txt3);margin-bottom:4px}
+.sc-val{font-family:var(--mono);font-size:22px;font-weight:600;line-height:1}
+.sc-sub{font-size:11px;color:var(--txt3);margin-top:3px}
+.c-green{color:var(--success)}.c-amber{color:var(--warn)}.c-red{color:var(--err)}.c-blue{color:#3B82F6}.c-muted{color:var(--txt3)}
+@media(max-width:700px){.layout{flex-direction:column}.panel-left{width:100%}.field-row{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>ultimate describer</h1>
+    <p>paste analysis json from claude &mdash; get precision scores and visualizations</p>
+  </header>
+
+  <div class="layout">
+    <!-- INPUT PANEL -->
+    <div class="panel-left">
+      <div class="field">
+        <label for="jsonInput">analysis json</label>
+        <textarea id="jsonInput" rows="18" placeholder='Paste the JSON from Claude here...&#10;&#10;Ask Claude:&#10;"Analyze this description and return the description-precision JSON"&#10;&#10;Then paste the result here.' style="font-family:var(--mono);font-size:11px;line-height:1.5"></textarea>
+      </div>
+      <button id="analyzeBtn" onclick="loadJSON()">load &rarr;</button>
+    </div>
+
+    <!-- RESULTS PANEL -->
+    <div class="panel-right" id="resultsPanel">
+      <div id="errorBox" class="error-box" style="display:none"></div>
+
+      <!-- VAE Architecture Diagram -->
+      <div class="section">
+        <div class="section-title">encoding pipeline</div>
+        <div id="vaeDiagram"></div>
+      </div>
+
+      <!-- Description with claim chips -->
+      <div class="section">
+        <div class="section-title">claims</div>
+        <div id="claimsSection"></div>
+      </div>
+
+      <!-- Funnel -->
+      <div class="section">
+        <div class="section-title">specificity funnel</div>
+        <div id="funnel"></div>
+      </div>
+
+      <!-- Radar -->
+      <div class="section">
+        <div class="section-title">scores</div>
+        <div class="score-row" id="scoreCards"></div>
+        <div class="radar-wrap" style="margin-top:16px">
+          <canvas id="radarChart" width="280" height="280"></canvas>
+        </div>
+      </div>
+
+      <!-- Suggestions -->
+      <div class="section">
+        <div class="section-title">rewrite suggestions</div>
+        <div id="suggestionsSection"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let radarChartInstance = null;
+
+function loadJSON() {
+  const raw = document.getElementById('jsonInput').value.trim();
+  if (!raw) { alert('Paste the JSON from Claude first.'); return; }
+  document.getElementById('errorBox').style.display = 'none';
+  try {
+    const data = JSON.parse(raw);
+    renderResults(data);
+  } catch (e) {
+    const eb = document.getElementById('errorBox');
+    eb.textContent = 'Invalid JSON: ' + e.message;
+    eb.style.display = 'block';
+    document.getElementById('resultsPanel').classList.add('visible');
+  }
+}
+
+function renderResults(data) {
+  document.getElementById('resultsPanel').classList.add('visible');
+  renderVAEDiagram(data);
+  renderClaims(data);
+  renderFunnel(data);
+  renderRadar(data);
+  renderSuggestions(data);
+}
+
+// ─── VAE Diagram ──────────────────────────────────────────────────────────────
+function renderVAEDiagram(data) {
+  const s = data.scores || {};
+  const hasSource = !!(data.source_content);
+  const prompt = data.generating_prompt || '';
+  const spec = (s.specificity || 0).toFixed(1);
+  const eff = (s.efficiency || 0).toFixed(2);
+  const ceil = s.constrained_ceiling;
+  const ceilPct = ceil ? Math.round((s.specificity / ceil) * 100) : null;
+
+  const scoreColor = v => v >= 7 ? '#059669' : v >= 4 ? '#D97706' : '#DC2626';
+  const rScore = s.retrieval || 0, dScore = s.display || 0, cScore = s.classification_signal || 0;
+
+  const W = 700, H = 130;
+  const boxW = 90, boxH = 44, r = 6;
+  const box = (x, y, label, sub, color='#E8E8E5', textColor='#1A1A18') =>
+    `<rect x="${x}" y="${y}" width="${boxW}" height="${boxH}" rx="${r}" fill="white" stroke="${color}" stroke-width="1.5"/>
+     <text x="${x+boxW/2}" y="${y+17}" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="${textColor}">${label}</text>
+     ${sub ? `<text x="${x+boxW/2}" y="${y+31}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#9CA3AF">${sub}</text>` : ''}`;
+
+  const arrow = (x1, y, x2, label='', above='') =>
+    `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#D1D5DB" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+     ${above ? `<text x="${(x1+x2)/2}" y="${y-8}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#9CA3AF">${above}</text>` : ''}
+     ${label ? `<text x="${(x1+x2)/2}" y="${y+14}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#9CA3AF">${label}</text>` : ''}`;
+
+  const srcColor = hasSource ? '#3B82F6' : '#D1D5DB';
+  const srcTxt = hasSource ? '#3B82F6' : '#6B7280';
+  const promptTrunc = prompt.length > 22 ? prompt.slice(0,20)+'…' : (prompt || 'encode');
+
+  // Output box positions
+  const outY = 15;
+  const o1x = W - boxW - 10, descX = 280, srcX = 10;
+  const midY = outY + boxH/2;
+
+  // Three output boxes spread vertically
+  const out = (x, y, label, score) =>
+    box(x, y, label, `${score}/10`, scoreColor(score), scoreColor(score));
+
+  const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+  <defs>
+    <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#D1D5DB"/>
+    </marker>
+  </defs>
+  ${box(srcX, outY, 'source', hasSource?'provided':'none', srcColor, srcTxt)}
+  ${arrow(srcX+boxW, midY, descX-2, '', promptTrunc)}
+  ${box(descX, outY, 'description', '', '#E8E8E5', '#1A1A18')}
+  <text x="${descX+boxW/2}" y="${outY+boxH+14}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#6B7280">${spec} bits</text>
+  <text x="${descX+boxW/2}" y="${outY+boxH+25}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#9CA3AF">${eff} bits/claim${ceilPct ? '  ·  '+ceilPct+'% of ceiling' : ''}</text>
+  ${arrow(descX+boxW, 30, W-boxW*3-52, '', '')}
+  ${arrow(descX+boxW, midY, W-boxW*3-52, '', '')}
+  ${arrow(descX+boxW, H-30, W-boxW*3-52, '', '')}
+  ${out(W-boxW*3-50, 8, 'retrieval', rScore)}
+  ${out(W-boxW*3-50, 43, 'display', dScore)}
+  ${out(W-boxW*3-50, 78, 'classify', cScore)}
+  </svg>`;
+  document.getElementById('vaeDiagram').innerHTML = svg;
+}
+
+// ─── Claims ───────────────────────────────────────────────────────────────────
+function renderClaims(data) {
+  const claims = data.claims || [];
+  const chipClass = bits => bits > 4 ? 'chip-high' : bits >= 1.5 ? 'chip-mid' : 'chip-low';
+
+  const chips = claims.map(c => {
+    const label = c.text.length > 42 ? c.text.slice(0,40)+'…' : c.text;
+    const escaped = c.text.replace(/"/g,'&quot;');
+    const note = (c.note||'').replace(/"/g,'&quot;');
+    return `<span class="claim-chip ${chipClass(c.bits)}" title="">
+      <span>${label}</span>
+      <span class="chip-bits">${(c.bits||0).toFixed(1)}b</span>
+      <span class="chip-tip"><strong>${escaped}</strong><br>${(c.bits||0).toFixed(2)} bits · ${c.verified}<br>${note}</span>
+    </span>`;
+  }).join('');
+
+  document.getElementById('claimsSection').innerHTML =
+    `<div style="margin-bottom:8px;font-size:12px;color:var(--txt3)">${claims.length} atomic claims extracted</div>
+     <div>${chips}</div>`;
+}
+
+// ─── Funnel ───────────────────────────────────────────────────────────────────
+function renderFunnel(data) {
+  const curve = data.curve || [];
+  const universe = data.universe_size || 10000;
+  if (!curve.length) { document.getElementById('funnel').innerHTML = '<p style="color:var(--txt3);font-size:12px">No funnel data.</p>'; return; }
+
+  const sorted = [...curve].sort((a,b) => b.candidate_set - a.candidate_set);
+
+  const colorForPct = pct => {
+    // red (1.0) → amber (0.5) → green (0.0)
+    const r = pct > 0.5 ? 220 : Math.round(5 + (pct*2)*215);
+    const g = pct < 0.5 ? Math.round(pct*2*150) : Math.round(150 + (1-pct)*2*109);
+    return `rgb(${r},${g},70)`;
+  };
+
+  const rows = sorted.map(step => {
+    const pct = Math.min(step.candidate_set / universe, 1);
+    const barW = Math.max(pct * 100, 0.5);
+    const label = (step.label||'').length > 43 ? step.label.slice(0,41)+'…' : (step.label||'');
+    const rightLabel = step.candidate_set >= 1000
+      ? (step.candidate_set/1000).toFixed(1)+'k'
+      : step.candidate_set < 1 ? '<1' : Math.round(step.candidate_set).toLocaleString();
+    const pctStr = (pct * 100).toFixed(pct < 0.01 ? 2 : 0) + '%';
+    return `<div class="funnel-row">
+      <div class="funnel-label-left">${label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:${barW}%;background:${colorForPct(pct)}"></div>
+      </div>
+      <div class="funnel-label-right">${rightLabel} <span style="color:var(--txt3)">(${pctStr})</span></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('funnel').innerHTML = rows;
+}
+
+// ─── Radar + Score Cards ──────────────────────────────────────────────────────
+function renderRadar(data) {
+  const s = data.scores || {};
+  const acc = s.accuracy != null ? s.accuracy * 10 : null;
+  const spec = Math.min((s.specificity||0) / 23.3 * 10, 10);
+  const eff = Math.min((s.efficiency||0) / 5 * 10, 10);
+  const ret = s.retrieval || 0;
+  const disp = s.display || 0;
+  const cls = s.classification_signal || 0;
+
+  // Score cards
+  const ceilPct = s.constrained_ceiling ? Math.round((s.specificity / s.constrained_ceiling)*100) : null;
+  const colorClass = v => v === null ? 'c-muted' : v >= 7 ? 'c-green' : v >= 4 ? 'c-amber' : 'c-red';
+
+  document.getElementById('scoreCards').innerHTML = [
+    { label:'Accuracy', val: s.accuracy != null ? (s.accuracy*100).toFixed(0)+'%' : 'N/A', sub: s.accuracy != null ? '' : 'no source', cls: s.accuracy != null ? colorClass(s.accuracy*10) : 'c-muted' },
+    { label:'Specificity', val: (s.specificity||0).toFixed(1), sub: 'bits', cls: colorClass(spec) },
+    { label:'Efficiency', val: (s.efficiency||0).toFixed(2), sub: 'bits/claim', cls: colorClass(eff) },
+    { label:'Ceiling', val: s.constrained_ceiling ? s.constrained_ceiling.toFixed(1) : '—', sub: ceilPct ? ceilPct+'% reached' : 'bits max', cls: 'c-blue' },
+  ].map(c => `<div class="score-card"><div class="sc-label">${c.label}</div><div class="sc-val ${c.cls}">${c.val}</div><div class="sc-sub">${c.sub}</div></div>`).join('');
+
+  const values = [
+    acc !== null ? acc : 0,
+    spec, eff, ret, disp, cls
+  ];
+
+  if (radarChartInstance) radarChartInstance.destroy();
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  radarChartInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Accuracy','Specificity','Efficiency','Retrieval','Display','Classify'],
+      datasets: [{
+        data: values,
+        fill: true,
+        backgroundColor: 'rgba(217,119,6,0.12)',
+        borderColor: '#D97706',
+        borderWidth: 2,
+        pointBackgroundColor: '#D97706',
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: false,
+      scales: {
+        r: {
+          min: 0, max: 10, ticks: { stepSize: 2, font: { size: 10 }, color: '#9CA3AF', backdropColor: 'transparent' },
+          grid: { color: '#E8E8E5' },
+          angleLines: { color: '#E8E8E5' },
+          pointLabels: { font: { size: 11, family: 'Inter' }, color: '#6B7280' }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// ─── Suggestions ─────────────────────────────────────────────────────────────
+function renderSuggestions(data) {
+  const sug = data.suggestions || {};
+  const within = sug.within_scope || [];
+  const prompt = sug.prompt_level || [];
+
+  const renderGroup = (items, badgeClass, groupClass, groupLabel) => {
+    if (!items.length) return '';
+    const itemsHtml = items.map(s => {
+      const tags = (s.improves||[]).map(t => `<span class="use-tag on">${t}</span>`).join('');
+      const gain = s.bit_gain ? `+${s.bit_gain.toFixed ? s.bit_gain.toFixed(1) : s.bit_gain} bits` : '';
+      return `<details class="sug-item">
+        <summary>${s.change || 'Improvement'}<span class="bit-badge ${badgeClass}">${gain}</span></summary>
+        <div class="sug-body">${s.reason||''}<div class="use-tags">${tags}</div></div>
+      </details>`;
+    }).join('');
+    return `<div class="sug-group ${groupClass}">
+      <div class="sug-group-label">${groupLabel}</div>
+      ${itemsHtml}
+    </div>`;
+  };
+
+  document.getElementById('suggestionsSection').innerHTML =
+    renderGroup(within, 'badge-within', 'sug-within', 'within prompt scope') +
+    renderGroup(prompt, 'badge-prompt', 'sug-prompt', 'prompt-level improvements');
+}
+</script>
+</body>
+</html>
