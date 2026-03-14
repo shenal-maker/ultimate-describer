@@ -66,6 +66,22 @@ finds terms from other languages that capture a concept more precisely than engl
 /crossling "the satisfaction of watching someone get what they deserve"
 ```
 
+## evaluation
+
+### `/eval` — precision evaluator
+
+scores outputs across 10 metrics using claude itself as the judge — no API key needed. works three ways:
+
+```
+/eval tests.json                           # run full test suite from file
+/eval "she's nice" "she remembers your coffee order"    # compare two texts inline
+/eval "she remembers your coffee order after meeting you once"  # score single text
+```
+
+measures: referent reduction, sentence self-check, information density, discriminability, precision vector (denotative/connotative/pragmatic), voice preservation, coherence, vagueness detection, cross-lingual validation, audience adaptation.
+
+there's also a `eval.py` script in the repo root for automated batch runs via the API (requires `ANTHROPIC_API_KEY`).
+
 ## personalization
 
 `/precise-calibrate` (or the first run of `/language-precision`) writes a style profile to `.claude/skills/precise/user-profile.md`. all skills read it automatically. re-run calibration anytime or edit the file directly.
