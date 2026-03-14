@@ -1,74 +1,71 @@
 # language precision skills
 
-four claude code skills that form a pipeline: calibrate who you are → make existing text sharper → generate new descriptions → raid other languages when english falls short.
+## `/language-precision` — the unified skill
 
-## `/precise` — the core engine
-
-takes text you've already written and makes it more specific. three levers:
-
-- **`--level`** (0–1): how aggressive. 0.2 just kills the worst offenders ("nice", "stuff", "things"). 0.8 replaces every vague adjective with something that narrows who/what you could be talking about. 1.0 goes borderline forensic — descriptions that could only refer to one thing.
-- **`--audience`**: who's reading. "hiring managers" gets different word choices than "my best friend." shifts register and assumed knowledge.
-- **`--domain`**: which lens to describe through. "mathematical" quantifies. "literary" uses precise metaphor. "first-principles" decomposes to causes.
-
-detects five types of vagueness: hedge words ("kind of"), hypernyms used where hyponyms exist ("animal" when you mean "border collie"), emotional vagueness ("felt bad"), quantifier vagueness ("some", "many"), and dead metaphors ("think outside the box").
-
-output: rewritten text + a table showing every replacement and what ambiguity it removed. also flags dimensions it *didn't* cover, so you know what's still missing.
-
-if you've run `/precise-calibrate`, it reads your profile and adapts the output style automatically.
-
-## `/precise-calibrate` — the preference quiz
-
-learns how *you* like things described. two modes:
-
-**quiz mode** (default): 5 rounds. each round shows 3 descriptions of the same thing in different styles — one abstract, one concrete, one analytical (varies each round). you pick the one you like. it infers your position on 5 axes:
-
-1. abstract ↔ concrete
-2. emotional ↔ analytical
-3. terse ↔ elaborate
-4. formal ↔ colloquial
-5. metaphorical ↔ literal
-
-uses adaptive selection — if your first two answers both lean concrete, it stops asking about that axis and probes the ones it's still uncertain about.
-
-**corpus mode**: give it a path to something you've written. it analyzes sentence length, adjective density, abstraction level, metaphor frequency, and infers the same 5-axis profile from your actual writing.
-
-output: writes a profile file that `/precise` and `/describe` read automatically on every future invocation. you can re-run it anytime or edit the file directly.
-
-## `/describe` — generative descriptions
-
-give it a subject (person, company, idea, experience, place, skill, emotion) and it generates a description from scratch. unlike `/precise`, this isn't editing your text — it's writing new text about something.
-
-**`--purpose`** is the most important flag. "job application" and "introducing to a friend" produce fundamentally different descriptions of the same person because different dimensions matter. it maps the salient dimensions for the subject type (e.g., for a person: behavior patterns, competencies, energy, values, quirks) then filters by purpose.
-
-the hard constraint: every sentence gets a self-check — "could this sentence describe something else equally well?" if yes, it's not precise enough and gets revised. "dynamic self-starter with a passion for innovation" fails this test because it describes everyone. "published three papers that changed how the field models protein folding" passes because it's one person.
-
-flags information gaps. if it can't be specific because it doesn't know enough, it tells you exactly what questions to answer rather than hallucinating details.
-
-## `/crossling` — cross-lingual precision
-
-give it a concept english handles poorly, and it finds words from other languages that capture it better.
-
-example: "the specific type of nostalgia for a place you've never been" → might surface portuguese *saudade*, welsh *hiraeth*, romanian *dor* — each slightly different in what they capture.
-
-for each term it returns: the word, source language, literal translation, actual meaning in use, why it's more precise than the english equivalent, an example sentence, and a **confidence rating** (high/medium/low).
-
-the built-in skepticism is the important part. it flags when:
-- a foreign word isn't actually more precise, just more compact (bundling ≠ precision)
-- borrowing the word would confuse your audience more than help
-- english can handle it fine with the right phrasing — and suggests that phrasing instead
-- it's not confident enough in a term's actual usage to recommend it
-
-draws from diverse language families rather than defaulting to the usual german/japanese "untranslatable" lists.
-
-## how they connect
-
-`/precise-calibrate` writes a style profile → `/precise` and `/describe` read it automatically → output adapts to how you actually like things described. the personalization loop works through the filesystem, no database needed.
-
-## quick start
+one command that runs the full pipeline. auto-detects whether you're editing existing text or describing something new, checks your style profile (runs a fast 1-question calibration if you don't have one yet), upgrades precision, and enriches with cross-lingual terms when they genuinely help.
 
 ```
-/precise "she's a really nice person who does interesting work" --level 0.8
+/language-precision "she's a really nice person who does interesting work" --level 0.8
+/language-precision "my cofounder" --purpose "investor pitch" --audience "YC partners"
+/language-precision "the feeling when a great idea surfaces mid-conversation and immediately evaporates"
+```
+
+### flags
+
+- `--level` (0–1, default 0.6): specificity depth. 0.2 = light touch. 0.8 = instance-level. 1.0 = forensic.
+- `--audience`: who's reading. shifts register and assumed knowledge.
+- `--purpose`: what the description is for. "job application", "investor pitch", "personal journal", etc.
+- `--domain`: framing lens. "mathematical", "literary", "first-principles", "technical", "colloquial".
+
+### what it does (5-stage pipeline)
+
+1. **profile check** — reads your style preferences (or runs a fast 1-question calibration on first use)
+2. **mode detection** — auto-detects editing vs generative mode, maps salient dimensions
+3. **precision engine** — replaces vague terms, applies self-check ("could this describe something else?"), frames in requested domain
+4. **cross-lingual enrichment** — surfaces terms from other languages only when they genuinely add precision
+5. **output assembly** — compiled result with change table, dimension coverage, and alternatives considered
+
+---
+
+## individual skills
+
+the pipeline stages are also available as standalone skills for when you want just one piece:
+
+### `/precise` — precision engine only
+
+takes existing text, upgrades vague terms. same `--level`, `--audience`, `--domain` flags.
+
+```
+/precise "the company has a great culture" --level 0.7 --audience "job candidates"
+```
+
+### `/precise-calibrate` — full style calibration
+
+5-round adaptive quiz or writing sample analysis. builds a detailed profile across 5 axes: abstract↔concrete, emotional↔analytical, terse↔elaborate, formal↔colloquial, metaphorical↔literal.
+
+use this when you want a thorough calibration instead of the 1-question fast version built into `/language-precision`.
+
+```
 /precise-calibrate
-/describe "the feeling of being mid-conversation when a great idea surfaces and immediately evaporates" --purpose "product pitch"
-/crossling "the specific type of nostalgia for a place you've never been"
+/precise-calibrate path/to/my-writing-sample.md
 ```
+
+### `/describe` — generative descriptions only
+
+generates descriptions from scratch for a subject (person, company, idea, experience, place, skill, emotion). `--purpose` is the most important flag.
+
+```
+/describe "the mass resignation at Twitter post-acquisition" --purpose "case study"
+```
+
+### `/crossling` — cross-lingual search only
+
+finds terms from other languages that capture a concept more precisely than english. includes confidence ratings and flags when english works fine.
+
+```
+/crossling "the satisfaction of watching someone get what they deserve"
+```
+
+## personalization
+
+`/precise-calibrate` (or the first run of `/language-precision`) writes a style profile to `.claude/skills/precise/user-profile.md`. all skills read it automatically. re-run calibration anytime or edit the file directly.
