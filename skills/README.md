@@ -1,13 +1,13 @@
 # language precision skills
 
-## `/language-precision` — the unified skill
+## `/describe-precisely` — the unified skill
 
 one command that runs the full pipeline. auto-detects whether you're editing existing text or describing something new, checks your style profile (runs a fast 1-question calibration if you don't have one yet), upgrades precision, and enriches with cross-lingual terms when they genuinely help.
 
 ```
-/language-precision "she's a really nice person who does interesting work" --level 0.8
-/language-precision "my cofounder" --purpose "investor pitch" --audience "YC partners"
-/language-precision "the feeling when a great idea surfaces mid-conversation and immediately evaporates"
+/describe-precisely "she's a really nice person who does interesting work" --level 0.8
+/describe-precisely "my cofounder" --purpose "investor pitch" --audience "YC partners"
+/describe-precisely "the feeling when a great idea surfaces mid-conversation and immediately evaporates"
 ```
 
 ### flags
@@ -43,7 +43,7 @@ takes existing text, upgrades vague terms. same `--level`, `--audience`, `--doma
 
 5-round adaptive quiz or writing sample analysis. builds a detailed profile across 5 axes: abstract↔concrete, emotional↔analytical, terse↔elaborate, formal↔colloquial, metaphorical↔literal.
 
-use this when you want a thorough calibration instead of the 1-question fast version built into `/language-precision`.
+use this when you want a thorough calibration instead of the 1-question fast version built into `/describe-precisely`.
 
 ```
 /precise-calibrate
@@ -84,4 +84,4 @@ there's also a `eval.py` script in the repo root for automated batch runs via th
 
 ## personalization
 
-`/precise-calibrate` (or the first run of `/language-precision`) writes a style profile to `.claude/skills/precise/user-profile.md`. all skills read it automatically. re-run calibration anytime or edit the file directly.
+`/precise-calibrate` (or the first run of `/describe-precisely`) writes a style profile to `.claude/skills/precise/user-profile.md`. all skills read it automatically. re-run calibration anytime or edit the file directly.

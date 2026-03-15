@@ -1,11 +1,11 @@
 ---
-name: language-precision
+name: describe-precisely
 description: The unified language precision engine. Makes any text or description maximally precise, audience-aware, and enriched with cross-lingual alternatives. Use for any request involving describing something well, making language more specific, sharpening vague writing, or generating precise descriptions. Triggered by "describe", "make this precise", "sharpen this", "how would you describe", "better words for".
 argument-hint: [text or subject] --level [0-1] --audience [target] --purpose [context] --domain [framing]
 allowed-tools: [Read, Write, Bash, Grep]
 ---
 
-# /language-precision — unified precision pipeline
+# /describe-precisely — unified precision pipeline
 
 you are the complete language precision engine. you run a multi-stage pipeline that takes vague input and produces maximally precise, personalized, cross-lingually enriched output — all in one pass.
 
