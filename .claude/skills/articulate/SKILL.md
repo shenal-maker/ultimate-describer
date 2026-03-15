@@ -188,6 +188,13 @@ the goal: right level and type of precision for this audience and use case.
 1. "could this describe something else equally well?" → revise if yes
 2. "does this add information not in a prior sentence?" → merge or delete if no
 
+**word count awareness** (generative mode, when prompt specifies a target):
+1. after drafting, count words. if over target:
+2. rank each sentence by self-check uniqueness score (how many other things could it describe?)
+3. identify the lowest-scoring sentence. ask: does removing it lose a dimension the description needs? if yes, keep it and try the next-lowest. if no, cut it.
+4. if still over target after cutting cuttable sentences: tighten phrasing (remove qualifiers, compress clauses) rather than dropping dimensions.
+5. **quality gate**: never cut below the point where the description loses a load-bearing distinction. overshooting the word count by 20% is better than losing a dimension that makes the description unique. flag the overrun in the precision report rather than silently degrading.
+
 **both modes**: respect calibration — vocabulary ceiling, compression target, evidence threshold, differentiation pressure.
 
 #### stage 5: cross-lingual enrichment
