@@ -1,0 +1,120 @@
+{
+  "id": "conversation_people",
+  "subject_type": "group",
+  "purpose": "social observation",
+  "audience": "product case-study reader",
+  "audience_profile": {
+    "domain_fluency": 4,
+    "attention_budget": 6,
+    "epistemic_stance": 4,
+    "action_orientation": 5
+  },
+
+  "eval": {
+    "referent_reduction": {
+      "baseline_set_size": "~50000 groups",
+      "skill_set_size": "~500 groups",
+      "reduction_factor": "100x",
+      "note": "Kicked out of rooms + 3 named roles + specific product outputs collapse the referent set dramatically"
+    },
+    "self_check_pass_rate": {
+      "baseline": 0,
+      "skill": 0.43,
+      "delta_pp": 43,
+      "baseline_detail": "0/7 sentences uniquely identify this group — all generic startup/brainstorm descriptors",
+      "skill_detail": "3/7 pass: 'getting kicked out of rooms', the three-role breakdown, 'people who met recently but think compatibly'"
+    },
+    "info_density": {
+      "baseline_facts_per_word": 0.035,
+      "skill_facts_per_word": 0.096,
+      "ratio": 2.7
+    },
+    "precision_vector": {
+      "baseline": { "denotative": 0.20, "connotative": 0.45, "pragmatic": 0.35 },
+      "skill":    { "denotative": 0.75, "connotative": 0.80, "pragmatic": 0.82 }
+    },
+    "voice_preservation": { "score": 6, "note": "Voice shifted from observational to journalistic — appropriate for the audience" },
+    "coherence": { "score": 9, "note": "Skill output reads like polished case-study prose; opening line is strong" },
+    "audience_adaptation": { "score": 8, "note": "Uses product language (roles, named interfaces) calibrated to case-study reader" }
+  },
+
+  "baseline": {
+    "label": "A — ChatGPT (no skill)",
+    "text": "Three curious collaborators rapidly exploring an idea about AI systems that improve how humans describe things. The speakers appear intellectually playful and exploratory, bouncing ideas off one another with high energy and minimal hierarchy. Their conversation reflects a startup-style brainstorming vibe-fast, associative, and speculative. They repeatedly build on each other's thoughts about AI agents that refine descriptions, personalize language, and adapt to social contexts. The tone suggests curiosity, openness, and intellectual excitement, with frequent interruptions and unfinished thoughts typical of creative ideation. References to linguistics, math models, advertising, and philosophy indicate analytical, interdisciplinary thinkers. The overall atmosphere feels like friends or collaborators spontaneously generating product concepts, enthusiastic about turning abstract language theory into practical tools.",
+    "precision": { "denotative": 0.20, "connotative": 0.45, "pragmatic": 0.35 },
+    "sentences": [
+      { "text": "Three curious collaborators rapidly exploring an idea about AI systems that improve how humans describe things.", "heat": 0.35, "type": "denotative" },
+      { "text": "The speakers appear intellectually playful and exploratory, bouncing ideas off one another with high energy and minimal hierarchy.", "heat": 0.08, "type": "connotative" },
+      { "text": "Their conversation reflects a startup-style brainstorming vibe-fast, associative, and speculative.", "heat": 0.05, "type": "connotative" },
+      { "text": "They repeatedly build on each other's thoughts about AI agents that refine descriptions, personalize language, and adapt to social contexts.", "heat": 0.42, "type": "denotative" },
+      { "text": "The tone suggests curiosity, openness, and intellectual excitement, with frequent interruptions and unfinished thoughts typical of creative ideation.", "heat": 0.04, "type": "connotative" },
+      { "text": "References to linguistics, math models, advertising, and philosophy indicate analytical, interdisciplinary thinkers.", "heat": 0.38, "type": "denotative" },
+      { "text": "The overall atmosphere feels like friends or collaborators spontaneously generating product concepts, enthusiastic about turning abstract language theory into practical tools.", "heat": 0.12, "type": "pragmatic" }
+    ],
+    "curve": [
+      { "label": "start", "pct": 100 },
+      { "label": "+ AI systems + descriptions", "pct": 60 },
+      { "label": "+ linguistics, math, advertising, philosophy", "pct": 28 },
+      { "label": "+ refine / personalize / adapt", "pct": 18 },
+      { "label": "+ remaining claims", "pct": 14 }
+    ],
+    "phrases": {
+      "denotative": [
+        { "text": "AI agents that refine descriptions, personalize language, and adapt to social contexts", "dir": 1, "note": "3 specific functions named" },
+        { "text": "linguistics, math models, advertising, and philosophy", "dir": 1, "note": "4 specific domain references" },
+        { "text": "curious collaborators", "dir": -1, "note": "hypernym — describes millions of groups" },
+        { "text": "startup-style brainstorming vibe", "dir": -1, "note": "dead metaphor" }
+      ],
+      "connotative": [
+        { "text": "intellectually playful and exploratory", "dir": -1, "note": "generic positive adjectives" },
+        { "text": "curiosity, openness, and intellectual excitement", "dir": -1, "note": "vague affect list" },
+        { "text": "high energy and minimal hierarchy", "dir": -1, "note": "startup boilerplate" }
+      ],
+      "pragmatic": [
+        { "text": "enthusiastic about turning abstract language theory into practical tools", "dir": -1, "note": "not calibrated for case-study reader" },
+        { "text": "typical of creative ideation", "dir": -1, "note": "academic hedge, wrong register for audience" }
+      ]
+    }
+  },
+
+  "skill": {
+    "label": "B — with describe-well skill",
+    "text": "Three people building in public, mid-brainstorm, getting kicked out of rooms. One drives the technical architecture (agents, sliders, formalization), one connects everything to applications (copywriting, job apps, advertising), one keeps asking 'but what does it look like for the user?' - quiz systems, synonym selectors, live-updating interfaces.\n\nThe vibe is high-trust intellectual riffing with zero hierarchy. Ideas get picked up, extended, and mutated fast. Nobody's filtering for feasibility yet - they're mapping the possibility space. Frequent interruptions are signs of excitement, not rudeness. The conversation has the specific energy of people who met recently but think compatibly - building shared vocabulary in real time.",
+    "precision": { "denotative": 0.75, "connotative": 0.80, "pragmatic": 0.82 },
+    "sentences": [
+      { "text": "Three people building in public, mid-brainstorm, getting kicked out of rooms.", "heat": 0.88, "type": "denotative" },
+      { "text": "One drives the technical architecture (agents, sliders, formalization), one connects everything to applications (copywriting, job apps, advertising), one keeps asking 'but what does it look like for the user?' - quiz systems, synonym selectors, live-updating interfaces.", "heat": 0.95, "type": "denotative" },
+      { "text": "The vibe is high-trust intellectual riffing with zero hierarchy.", "heat": 0.55, "type": "connotative" },
+      { "text": "Ideas get picked up, extended, and mutated fast.", "heat": 0.38, "type": "connotative" },
+      { "text": "Nobody's filtering for feasibility yet - they're mapping the possibility space.", "heat": 0.72, "type": "pragmatic" },
+      { "text": "Frequent interruptions are signs of excitement, not rudeness.", "heat": 0.60, "type": "connotative" },
+      { "text": "The conversation has the specific energy of people who met recently but think compatibly - building shared vocabulary in real time.", "heat": 0.85, "type": "connotative" }
+    ],
+    "curve": [
+      { "label": "start", "pct": 100 },
+      { "label": "+ three roles: arch / apps / UX", "pct": 12 },
+      { "label": "+ getting kicked out of rooms", "pct": 3 },
+      { "label": "+ quiz systems, synonym selectors, live-updating interfaces", "pct": 0.8 },
+      { "label": "+ met recently, building shared vocabulary", "pct": 0.3 }
+    ],
+    "phrases": {
+      "denotative": [
+        { "text": "getting kicked out of rooms", "dir": 1, "note": "specific observable event, highly distinctive" },
+        { "text": "agents, sliders, formalization", "dir": 1, "note": "named technical outputs" },
+        { "text": "quiz systems, synonym selectors, live-updating interfaces", "dir": 1, "note": "specific product ideas from the conversation" },
+        { "text": "building in public", "dir": -1, "note": "startup cliché" }
+      ],
+      "connotative": [
+        { "text": "high-trust intellectual riffing", "dir": 1, "note": "precise social dynamic, not generic" },
+        { "text": "specific energy of people who met recently but think compatibly", "dir": 1, "note": "identifies a precise relational stage" },
+        { "text": "building shared vocabulary in real time", "dir": 1, "note": "observable process, not just a vibe label" },
+        { "text": "zero hierarchy", "dir": 1, "note": "quantified (zero) vs vague 'minimal'" }
+      ],
+      "pragmatic": [
+        { "text": "Nobody's filtering for feasibility yet - they're mapping the possibility space", "dir": 1, "note": "stages product maturity clearly for a case-study reader" },
+        { "text": "One drives the technical architecture", "dir": 1, "note": "role breakdown is directly useful for case-study audience" },
+        { "text": "Frequent interruptions are signs of excitement, not rudeness", "dir": -1, "note": "interpretive overreach — case-study reader can infer this" }
+      ]
+    }
+  }
+}

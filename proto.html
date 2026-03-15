@@ -3,198 +3,339 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>communication profile</title>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<title>description precision report</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{
-  background-color:#fff;
-  background-image:linear-gradient(rgba(160,190,160,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(160,190,160,.18) 1px,transparent 1px);
-  background-size:22px 22px;
-  font-family:'Caveat',cursive;
-  color:#1e1e1e;
-  padding:32px 28px;
-  min-height:100vh;
-}
-h1{font-size:36px;font-weight:700;letter-spacing:-.01em;line-height:1}
-.sub{font-size:16px;color:#888;margin-top:4px;margin-bottom:24px;border-bottom:2px dashed #ccc;padding-bottom:12px}
-.layout{display:grid;grid-template-columns:46% 54%;gap:20px;align-items:start}
-.box{border:2px dashed #bbb;border-radius:6px;background:rgba(255,255,255,.85);padding:14px}
-.box-title{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#666;margin-bottom:10px}
-#mapCanvas{width:100%;display:block;cursor:pointer}
-.panel-label{font-size:18px;font-weight:700;margin-bottom:8px}
+body{background:#faf9f5;background-image:linear-gradient(rgba(120,90,50,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(120,90,50,.08) 1px,transparent 1px);background-size:24px 24px;font-family:'Caveat',cursive;color:#1a1a1a;padding:26px 30px;min-height:100vh}
+h1{font-size:32px;font-weight:700}
+.sub{font-size:12px;color:#aaa;margin-top:3px;margin-bottom:18px;border-bottom:2px dashed #ddd5c5;padding-bottom:10px;font-family:'JetBrains Mono',monospace}
+.box{border:2px dashed #ccc3b0;border-radius:5px;background:rgba(255,253,248,.92);padding:14px}
+.box-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#bbb;margin-bottom:12px;font-family:'JetBrains Mono',monospace}
+.top{display:grid;grid-template-columns:56% 44%;gap:16px;margin-bottom:16px;align-items:start}
+/* eval summary */
+.scores-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:14px}
+.scores-table th{text-align:left;color:#bbb;font-weight:400;padding:2px 6px 6px 0}
+.scores-table td{padding:4px 6px 4px 0;vertical-align:middle}
+.score-val{font-weight:600}
+.score-bar-wrap{width:80px;display:inline-block;vertical-align:middle;background:#ede8df;border-radius:2px;height:5px;margin-left:5px}
+.score-bar{height:5px;border-radius:2px;display:inline-block}
+.delta{font-size:11px;color:#2D8A4E;margin-left:4px}
+.stat-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.stat{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 8px;background:#f0ebe2;border:1px solid #ddd5c5;border-radius:3px;line-height:1.4}
+.stat strong{display:block;font-size:13px;font-weight:600}
+/* dim buttons */
+.dim-btns{display:flex;gap:6px;flex-wrap:wrap}
+.dim-btn{font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 10px;border:2px solid;border-radius:3px;cursor:pointer;background:transparent;font-weight:600;transition:all .15s}
+.dim-btn:hover{opacity:.8}
+.dim-btn.active{color:#1a1a1a}
+/* split pane */
+.split-wrap{padding:0;overflow:hidden;margin-bottom:12px}
+.pane-heads{display:grid;grid-template-columns:1fr 1fr;border-bottom:2px dashed #ccc3b0}
+.pane-head{padding:10px 16px;font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace}
 .la{color:#2D6A4F}.lb{color:#7B3F00}
-.desc{font-size:16px;line-height:1.9}
-mark{padding:1px 3px;border-radius:3px;cursor:help;font-style:normal}
-.hint{font-size:15px;color:#999;margin-top:18px;font-style:italic}
-.hint::before{content:'→ '}
-.panels{display:flex;flex-direction:column;gap:14px}
+.split{display:grid;grid-template-columns:1fr 1fr}
+.pane{overflow-y:auto;max-height:460px;padding:12px 16px}
+.pane+.pane{border-left:2px dashed #ccc3b0}
+.sent{display:flex;gap:8px;padding:8px 0;border-bottom:1px dashed #ede8df;align-items:flex-start}
+.sent:last-child{border-bottom:none}
+.badges{display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+.sbadge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 5px;border-radius:3px;text-align:center;min-width:34px;border:1px solid}
+.tbadge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:1px 4px;border-radius:2px;text-align:center;text-transform:uppercase;letter-spacing:.04em;opacity:.75}
+.stext{font-size:15px;line-height:1.75;flex:1}
+mark{padding:1px 3px;border-radius:3px;font-style:normal}
+.pnote{font-family:'JetBrains Mono',monospace;font-size:10px;color:#aaa;margin-left:3px;font-style:italic}
+/* hint + cite */
+.hint{font-size:12px;color:#bbb;font-family:'JetBrains Mono',monospace;font-style:italic;margin-bottom:6px}
+.hint::before{content:'↳ '}
+.cite{font-size:11px;color:#666;font-family:'JetBrains Mono',monospace;background:#fffbe6;border-left:2px solid #e8c840;padding:5px 9px;border-radius:0 3px 3px 0;display:none;line-height:1.5}
 </style>
 </head>
 <body>
 
-<h1>communication profile</h1>
-<p class="sub">comparative analysis · click a row to see which phrases drive that score</p>
+<h1>description precision report</h1>
+<p class="sub">conversation_people · describe-well skill · baseline vs skill output · click a dimension to highlight phrases</p>
 
-<div class="layout">
+<div class="top">
   <div class="box">
-    <div class="box-title">profile map</div>
-    <canvas id="mapCanvas"></canvas>
+    <div class="box-title">D / C / P precision space</div>
+    <div id="sphere"></div>
   </div>
-  <div class="panels">
-    <div class="box">
-      <div class="panel-label la">A — marketing pitch</div>
-      <div class="desc" id="textA"></div>
+  <div class="box">
+    <div class="box-title">eval summary</div>
+    <table class="scores-table">
+      <tr><th></th><th>A baseline</th><th>B skill</th><th>Δ</th></tr>
+      <tr>
+        <td style="color:#F5A500;font-family:'JetBrains Mono',monospace;font-size:11px">Denotative</td>
+        <td><span class="score-val">0.20</span><span class="score-bar-wrap"><span class="score-bar" style="width:20%;background:#2D6A4F"></span></span></td>
+        <td><span class="score-val">0.75</span><span class="score-bar-wrap"><span class="score-bar" style="width:75%;background:#7B3F00"></span></span></td>
+        <td><span class="delta">+0.55 ↑↑</span></td>
+      </tr>
+      <tr>
+        <td style="color:#E84040;font-family:'JetBrains Mono',monospace;font-size:11px">Connotative</td>
+        <td><span class="score-val">0.45</span><span class="score-bar-wrap"><span class="score-bar" style="width:45%;background:#2D6A4F"></span></span></td>
+        <td><span class="score-val">0.80</span><span class="score-bar-wrap"><span class="score-bar" style="width:80%;background:#7B3F00"></span></span></td>
+        <td><span class="delta">+0.35 ↑</span></td>
+      </tr>
+      <tr>
+        <td style="color:#1A9B8A;font-family:'JetBrains Mono',monospace;font-size:11px">Pragmatic</td>
+        <td><span class="score-val">0.35</span><span class="score-bar-wrap"><span class="score-bar" style="width:35%;background:#2D6A4F"></span></span></td>
+        <td><span class="score-val">0.82</span><span class="score-bar-wrap"><span class="score-bar" style="width:82%;background:#7B3F00"></span></span></td>
+        <td><span class="delta">+0.47 ↑↑</span></td>
+      </tr>
+    </table>
+    <div class="stat-row">
+      <div class="stat"><strong>100×</strong>referent reduction</div>
+      <div class="stat"><strong>0% → 43%</strong>self-check pass rate</div>
+      <div class="stat"><strong>2.7×</strong>info density</div>
+      <div class="stat"><strong>9/10</strong>coherence</div>
     </div>
-    <div class="box">
-      <div class="panel-label lb">B — spec sheet</div>
-      <div class="desc" id="textB"></div>
+    <div class="dim-btns" id="dimBtns">
+      <button class="dim-btn" data-dim="denotative" style="color:#F5A500;border-color:#F5A500">Denotative</button>
+      <button class="dim-btn" data-dim="connotative" style="color:#E84040;border-color:#E84040">Connotative</button>
+      <button class="dim-btn" data-dim="pragmatic" style="color:#1A9B8A;border-color:#1A9B8A">Pragmatic</button>
     </div>
   </div>
 </div>
-<p class="hint" id="hint">click a row to highlight phrases</p>
+
+<div class="split-wrap box">
+  <div class="pane-heads">
+    <div class="pane-head la">A — baseline (ChatGPT)</div>
+    <div class="pane-head lb">B — describe-well skill</div>
+  </div>
+  <div class="split">
+    <div class="pane" id="paneA"></div>
+    <div class="pane" id="paneB"></div>
+  </div>
+</div>
+
+<div class="hint" id="hint">click a dimension button to highlight phrases</div>
+<div class="cite" id="cite"></div>
 
 <script>
-// highlighter palette — one color per dimension
-const HL = [
-  '#C8E86A', // yellow-green  — Concreteness
-  '#FF8FA3', // coral         — Framing
-  '#7EC8E3', // sky blue      — Register
-  '#C5A3FF', // lavender      — Confidence
-  '#FFB347', // peach         — Precision
-  '#85E8C0', // mint          — Audience fit
-];
-
-const DIMS = [
-  { name:'Concreteness', left:'Abstract',       right:'Concrete'       },
-  { name:'Framing',      left:'Negative',       right:'Positive'       },
-  { name:'Register',     left:'Intimate',       right:'Formal'         },
-  { name:'Confidence',   left:'Tentative',      right:'Authoritative'  },
-  { name:'Precision',    left:'Under-specified', right:'Over-specified' },
-  { name:'Audience fit', left:'Misaligned',     right:'Calibrated'     },
-];
-
-const A = {
-  text: "Fit-Referals turns hiring and talent discovery into a network-driven growth loop. Instead of static job posts, users create rich descriptions of ideal candidates, share trackable referral links, and watch trusted introductions propagate through real social graphs. Every forward and referral is attributed to a specific branch, giving employers unprecedented visibility into which communities, advocates, and messages actually produce high-quality candidates. With AI-assisted brief creation, viral sharing mechanics, and built-in graph analytics, the product can serve recruiters, founders, communities, and internal talent teams alike. It has the ingredients of a scalable marketplace for trusted human recommendations at internet scale globally today.",
-  scores:[0.22,0.78,0.55,0.82,0.18,0.20],
-  phrases:[
-    [{text:"network-driven growth loop",dir:-1,note:"vague metaphor"},{text:"trackable referral links",dir:1,note:"specific feature"},{text:"internet scale globally today",dir:-1,note:"empty amplifier"}],
-    [{text:"turns hiring and talent discovery",dir:1,note:"positive reframe"},{text:"unprecedented visibility",dir:1,note:"strong positive claim"},{text:"trusted introductions",dir:1,note:"positive framing"}],
-    [{text:"scalable marketplace",dir:1,note:"business register"},{text:"viral sharing mechanics",dir:1,note:"startup register"},{text:"watch trusted introductions propagate",dir:-1,note:"slightly casual"}],
-    [{text:"has the ingredients of",dir:-1,note:"hedged — not a direct claim"},{text:"giving employers unprecedented visibility",dir:1,note:"assertive"}],
-    [{text:"high-quality candidates",dir:-1,note:"undefined"},{text:"specific branch",dir:1,note:"precise referent"},{text:"internet scale globally today",dir:-1,note:"no numbers"}],
-    [{text:"network-driven growth loop",dir:-1,note:"pitch language in a doc request"},{text:"trackable referral links",dir:1,note:"relevant"},{text:"scalable marketplace",dir:-1,note:"wrong context"}],
-  ]
-};
-
-const B = {
-  text: "A precision-augmentation system that transforms vague language into context-optimized, audience-specific descriptions. Core engine: detects ambiguity in input text, generates candidate replacements across a vague-to-precise spectrum, and ranks them along a formal specificity axis. Context calibration: conditions outputs on audience, domain lexicons, cross-language precision, and emotional register. Personalization layer: learns user stylistic preferences through comparative selection, quizzes, and writing analysis. Output interfaces: inline replacement, precision sliders, and multimodal generation (text, image, video, graphs). Evaluation loop: A/B testing, user inspection, and self-improving skill updates.",
-  scores:[0.82,0.05,0.88,0.68,0.78,0.74],
-  phrases:[
-    [{text:"generates candidate replacements",dir:1,note:"concrete action"},{text:"ranks them along a formal specificity axis",dir:1,note:"concrete mechanism"},{text:"precision-augmentation system",dir:-1,note:"abstract compound noun"}],
-    [{text:"transforms vague language",dir:-1,note:"frames current state as negative"},{text:"self-improving skill updates",dir:1,note:"positive capability"}],
-    [{text:"precision-augmentation system",dir:1,note:"formal/technical"},{text:"formal specificity axis",dir:1,note:"academic register"},{text:"A/B testing, user inspection",dir:1,note:"institutional"}],
-    [{text:"detects ambiguity",dir:1,note:"direct claim"},{text:"learns user stylistic preferences",dir:1,note:"assertive"},{text:"context-optimized",dir:-1,note:"vague adjective"}],
-    [{text:"A/B testing, user inspection, and self-improving skill updates",dir:1,note:"specific eval methods"},{text:"audience, domain lexicons, cross-language precision, and emotional register",dir:1,note:"exhaustive list"}],
-    [{text:"vague-to-precise spectrum",dir:1,note:"matches technical audience"},{text:"multimodal generation (text, image, video, graphs)",dir:1,note:"concrete for tech readers"}],
-  ]
-};
-
 const COL_A='#2D6A4F', COL_B='#7B3F00';
-let sel=null;
+const DIM_COL={denotative:'#F5A500', connotative:'#E84040', pragmatic:'#1A9B8A'};
+const DIM_HL={denotative:'#F5C518', connotative:'#FF8FA3', pragmatic:'#85E8C0'};
 
-function draw(s){
-  const cv=document.getElementById('mapCanvas');
-  const dpr=window.devicePixelRatio||1;
-  const W=cv.parentElement.clientWidth-28;
-  const RH=54,PT=10,PB=10,PL=140,PR=100;
-  const H=PT+DIMS.length*RH+PB;
-  cv.width=W*dpr; cv.height=H*dpr;
-  cv.style.width=W+'px'; cv.style.height=H+'px';
-  const ctx=cv.getContext('2d');
-  ctx.scale(dpr,dpr);
-  const tw=W-PL-PR;
+const CITES={
+  denotative:'Packard & Berger (2021): concrete, denotative language → +9% satisfaction, +13% spending',
+  connotative:'McNeil et al. (1982): connotative framing alone shifted preferences by 34 percentage points',
+  pragmatic:'Gaucher et al. (2011): pragmatic calibration to reader expertise raises uptake and trust'
+};
 
-  DIMS.forEach((d,i)=>{
-    const y0=PT+i*RH, ym=y0+RH/2;
-    const active=s===i;
-    // row background
-    const hlColor=HL[i];
-    ctx.fillStyle=active ? hlColor+'55' : hlColor+'18';
-    ctx.fillRect(0,y0,W,RH);
-    // track
-    ctx.beginPath(); ctx.moveTo(PL,ym); ctx.lineTo(PL+tw,ym);
-    ctx.strokeStyle=active ? '#aaa' : '#ddd';
-    ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
-    // dim name
-    ctx.textAlign='right';
-    ctx.font=`700 15px Caveat,cursive`;
-    ctx.fillStyle=active?'#111':'#333';
-    ctx.fillText(d.name,PL-10,ym-4);
-    // anchors
-    ctx.font='12px Caveat,cursive'; ctx.fillStyle='#aaa';
-    ctx.fillText(d.left,PL-10,ym+11);
-    ctx.textAlign='left';
-    ctx.fillText(d.right,PL+tw+8,ym+3);
+const A={
+  precision:{denotative:0.20,connotative:0.45,pragmatic:0.35},
+  sentences:[
+    {text:"Three curious collaborators rapidly exploring an idea about AI systems that improve how humans describe things.",heat:0.35,type:"denotative"},
+    {text:"The speakers appear intellectually playful and exploratory, bouncing ideas off one another with high energy and minimal hierarchy.",heat:0.08,type:"connotative"},
+    {text:"Their conversation reflects a startup-style brainstorming vibe—fast, associative, and speculative.",heat:0.05,type:"connotative"},
+    {text:"They repeatedly build on each other's thoughts about AI agents that refine descriptions, personalize language, and adapt to social contexts.",heat:0.42,type:"denotative"},
+    {text:"The tone suggests curiosity, openness, and intellectual excitement, with frequent interruptions and unfinished thoughts typical of creative ideation.",heat:0.04,type:"connotative"},
+    {text:"References to linguistics, math models, advertising, and philosophy indicate analytical, interdisciplinary thinkers.",heat:0.38,type:"denotative"},
+    {text:"The overall atmosphere feels like friends or collaborators spontaneously generating product concepts, enthusiastic about turning abstract language theory into practical tools.",heat:0.12,type:"pragmatic"}
+  ],
+  phrases:{
+    denotative:[
+      {text:"AI agents that refine descriptions, personalize language, and adapt to social contexts",dir:1,note:"3 specific functions named"},
+      {text:"linguistics, math models, advertising, and philosophy",dir:1,note:"4 specific domain references"},
+      {text:"curious collaborators",dir:-1,note:"hypernym — describes millions of groups"},
+      {text:"startup-style brainstorming vibe",dir:-1,note:"dead metaphor, zero specificity"}
+    ],
+    connotative:[
+      {text:"intellectually playful and exploratory",dir:-1,note:"generic positive adjectives"},
+      {text:"curiosity, openness, and intellectual excitement",dir:-1,note:"vague affect list"},
+      {text:"high energy and minimal hierarchy",dir:-1,note:"startup boilerplate"}
+    ],
+    pragmatic:[
+      {text:"enthusiastic about turning abstract language theory into practical tools",dir:-1,note:"not calibrated for case-study reader"},
+      {text:"typical of creative ideation",dir:-1,note:"academic hedge, wrong register"}
+    ]
+  }
+};
+
+const B={
+  precision:{denotative:0.75,connotative:0.80,pragmatic:0.82},
+  sentences:[
+    {text:"Three people building in public, mid-brainstorm, getting kicked out of rooms.",heat:0.88,type:"denotative"},
+    {text:"One drives the technical architecture (agents, sliders, formalization), one connects everything to applications (copywriting, job apps, advertising), one keeps asking 'but what does it look like for the user?' — quiz systems, synonym selectors, live-updating interfaces.",heat:0.95,type:"denotative"},
+    {text:"The vibe is high-trust intellectual riffing with zero hierarchy.",heat:0.55,type:"connotative"},
+    {text:"Ideas get picked up, extended, and mutated fast.",heat:0.38,type:"connotative"},
+    {text:"Nobody's filtering for feasibility yet — they're mapping the possibility space.",heat:0.72,type:"pragmatic"},
+    {text:"Frequent interruptions are signs of excitement, not rudeness.",heat:0.60,type:"connotative"},
+    {text:"The conversation has the specific energy of people who met recently but think compatibly — building shared vocabulary in real time.",heat:0.85,type:"connotative"}
+  ],
+  phrases:{
+    denotative:[
+      {text:"getting kicked out of rooms",dir:1,note:"specific observable event, highly distinctive"},
+      {text:"agents, sliders, formalization",dir:1,note:"named technical outputs"},
+      {text:"quiz systems, synonym selectors, live-updating interfaces",dir:1,note:"specific product ideas from the conversation"},
+      {text:"building in public",dir:-1,note:"startup cliché"}
+    ],
+    connotative:[
+      {text:"high-trust intellectual riffing",dir:1,note:"precise social dynamic, not generic"},
+      {text:"specific energy of people who met recently but think compatibly",dir:1,note:"identifies a precise relational stage"},
+      {text:"building shared vocabulary in real time",dir:1,note:"observable process, not a vibe label"},
+      {text:"zero hierarchy",dir:1,note:"quantified (zero) vs vague 'minimal'"}
+    ],
+    pragmatic:[
+      {text:"Nobody's filtering for feasibility yet — they're mapping the possibility space",dir:1,note:"stages product maturity for a case-study reader"},
+      {text:"One drives the technical architecture",dir:1,note:"role breakdown useful for case-study audience"},
+      {text:"Frequent interruptions are signs of excitement, not rudeness",dir:-1,note:"interpretive overreach — reader can infer this"}
+    ]
+  }
+};
+
+// --- Plotly sphere ---
+function makeSphere(n=20){
+  const x=[],y=[],z=[];
+  for(let i=0;i<=n;i++){
+    const rx=[],ry=[],rz=[];
+    for(let j=0;j<=n;j++){
+      const t=(i/n)*Math.PI/2, p=(j/n)*Math.PI/2;
+      rx.push(Math.sin(t)*Math.cos(p));
+      ry.push(Math.sin(t)*Math.sin(p));
+      rz.push(Math.cos(t));
+    }
+    x.push(rx);y.push(ry);z.push(rz);
+  }
+  return{x,y,z};
+}
+
+const sp=makeSphere();
+const axStyle={titlefont:{family:'JetBrains Mono,monospace',size:11},tickfont:{family:'JetBrains Mono,monospace',size:9},range:[0,1.05],gridcolor:'#e8e0d0',zerolinecolor:'#ddd5c5',backgroundcolor:'rgba(0,0,0,0)'};
+
+function buildSphereTraces(selDim){
+  const traces=[
+    {type:'surface',...sp,opacity:0.07,colorscale:[[0,'#cbbfa8'],[1,'#cbbfa8']],showscale:false,hoverinfo:'skip',lighting:{diffuse:0.2}},
+    // axis guides
+    {type:'scatter3d',x:[0,1.05],y:[0,0],z:[0,0],mode:'lines',line:{color:'#F5A500',width:2,dash:'dot'},hoverinfo:'skip',showlegend:false},
+    {type:'scatter3d',x:[0,0],y:[0,1.05],z:[0,0],mode:'lines',line:{color:'#E84040',width:2,dash:'dot'},hoverinfo:'skip',showlegend:false},
+    {type:'scatter3d',x:[0,0],y:[0,0],z:[0,1.05],mode:'lines',line:{color:'#1A9B8A',width:2,dash:'dot'},hoverinfo:'skip',showlegend:false},
+    // perfect point
+    {type:'scatter3d',x:[1],y:[1],z:[1],mode:'markers',marker:{size:4,color:'#ccc',symbol:'diamond'},name:'(1,1,1) perfect',hovertemplate:'perfect precision<extra></extra>'},
+    // A vector
+    {type:'scatter3d',x:[0,A.precision.denotative],y:[0,A.precision.connotative],z:[0,A.precision.pragmatic],
+     mode:'lines+markers',line:{color:COL_A,width:5},marker:{size:[2,10],color:COL_A},
+     name:`A  D=${A.precision.denotative} C=${A.precision.connotative} P=${A.precision.pragmatic}`,
+     hovertemplate:`A baseline<br>D: ${A.precision.denotative}<br>C: ${A.precision.connotative}<br>P: ${A.precision.pragmatic}<extra></extra>`},
+    // B vector
+    {type:'scatter3d',x:[0,B.precision.denotative],y:[0,B.precision.connotative],z:[0,B.precision.pragmatic],
+     mode:'lines+markers',line:{color:COL_B,width:5},marker:{size:[2,10],color:COL_B},
+     name:`B  D=${B.precision.denotative} C=${B.precision.connotative} P=${B.precision.pragmatic}`,
+     hovertemplate:`B skill<br>D: ${B.precision.denotative}<br>C: ${B.precision.connotative}<br>P: ${B.precision.pragmatic}<extra></extra>`},
+  ];
+
+  // if a dim is selected, add sentence-level dots
+  if(selDim){
+    const axes={denotative:[1,0,0],connotative:[0,1,0],pragmatic:[0,0,1]};
+    const ax=axes[selDim];
+    const addDots=(data,col,name)=>{
+      const pts=data.sentences.filter(s=>s.type===selDim);
+      if(!pts.length)return;
+      traces.push({
+        type:'scatter3d',
+        x:pts.map(s=>s.heat*ax[0]+(1-ax[0])*data.precision.denotative),
+        y:pts.map(s=>s.heat*ax[1]+(1-ax[1])*data.precision.connotative),
+        z:pts.map(s=>s.heat*ax[2]+(1-ax[2])*data.precision.pragmatic),
+        mode:'markers',
+        marker:{size:6,color:col,opacity:0.6,symbol:'circle'},
+        name:`${name} sentences`,
+        hovertext:pts.map(s=>s.text.slice(0,60)+'…'),
+        hovertemplate:'%{hovertext}<br>heat: '+pts.map(s=>s.heat).join(', ')+'<extra></extra>'
+      });
+    };
+    addDots(A,COL_A,'A');addDots(B,COL_B,'B');
+  }
+  return traces;
+}
+
+const layout={
+  scene:{
+    xaxis:{...axStyle,title:'Denotative'},
+    yaxis:{...axStyle,title:'Connotative'},
+    zaxis:{...axStyle,title:'Pragmatic'},
+    bgcolor:'rgba(0,0,0,0)',
+    camera:{eye:{x:1.4,y:1.4,z:1.0}}
+  },
+  paper_bgcolor:'rgba(0,0,0,0)',
+  margin:{l:0,r:0,t:10,b:0},
+  legend:{font:{family:'JetBrains Mono,monospace',size:10},bgcolor:'rgba(255,253,248,.9)',bordercolor:'#ccc3b0',borderwidth:1,x:0,y:1},
+  height:340
+};
+
+Plotly.newPlot('sphere', buildSphereTraces(null), layout, {responsive:true,displayModeBar:false});
+
+// --- Sentence rendering ---
+function scColor(v){return v>0.65?'#2D8A4E':v>0.4?'#c07000':'#c0392b';}
+const TYPE_COL={denotative:'#F5A500',connotative:'#E84040',pragmatic:'#1A9B8A'};
+
+function renderSents(data,elId,dim){
+  const phrases=dim?data.phrases[dim]:null;
+  const hl=dim?DIM_HL[dim]:null;
+  document.getElementById(elId).innerHTML=data.sentences.map(s=>{
+    let txt=s.text;
+    if(phrases){
+      const found=[];
+      phrases.forEach(p=>{const i=txt.indexOf(p.text);if(i>=0)found.push({...p,i});});
+      found.sort((a,b)=>b.i-a.i);
+      found.forEach(p=>{
+        const bg=hl+(p.dir>0?'cc':'44');
+        txt=txt.slice(0,p.i)+`<mark style="background:${bg}">${p.text}</mark><span class="pnote">← ${p.note}</span>`+txt.slice(p.i+p.text.length);
+      });
+    }
+    const c=scColor(s.heat);
+    return `<div class="sent">
+      <div class="badges">
+        <span class="sbadge" style="background:${c}18;color:${c};border-color:${c}44">${s.heat.toFixed(2)}</span>
+        <span class="tbadge" style="background:${TYPE_COL[s.type]}22;color:${TYPE_COL[s.type]}">${s.type.slice(0,4)}</span>
+      </div>
+      <span class="stext">${txt}</span>
+    </div>`;
+  }).join('');
+}
+
+renderSents(A,'paneA',null);
+renderSents(B,'paneB',null);
+
+// --- Dim buttons ---
+let selDim=null;
+document.getElementById('dimBtns').addEventListener('click',e=>{
+  const btn=e.target.closest('.dim-btn');
+  if(!btn)return;
+  const dim=btn.dataset.dim;
+  selDim=selDim===dim?null:dim;
+  document.querySelectorAll('.dim-btn').forEach(b=>{
+    const active=b.dataset.dim===selDim;
+    b.classList.toggle('active',active);
+    b.style.background=active?DIM_COL[b.dataset.dim]+'22':'transparent';
   });
-
-  // profile lines
-  const drawLine=(data,color)=>{
-    const pts=data.scores.map((sc,i)=>({x:PL+sc*tw,y:PT+i*RH+RH/2}));
-    ctx.beginPath();
-    pts.forEach((p,i)=>{
-      if(i===0){ctx.moveTo(p.x,p.y);return;}
-      const pv=pts[i-1],my=(pv.y+p.y)/2;
-      ctx.bezierCurveTo(pv.x,my,p.x,my,p.x,p.y);
-    });
-    ctx.strokeStyle=color+'cc'; ctx.lineWidth=2.5; ctx.stroke();
-    pts.forEach((p,i)=>{
-      ctx.beginPath(); ctx.arc(p.x,p.y,s===i?9:6,0,Math.PI*2);
-      ctx.fillStyle=s===i?HL[i]:color;
-      ctx.fill();
-      ctx.strokeStyle=color; ctx.lineWidth=2; ctx.stroke();
-    });
-  };
-
-  drawLine(A,COL_A);
-  drawLine(B,COL_B);
-
-  // legend
-  ctx.font='bold 14px Caveat,cursive'; ctx.textAlign='left';
-  ctx.fillStyle=COL_A; ctx.fillText('A',PL+6,PT+14);
-  ctx.fillStyle=COL_B; ctx.fillText('B',PL+22,PT+14);
-}
-
-function applyHighlight(s){
-  const mark=(raw,phrases)=>{
-    if(!phrases)return raw;
-    let r=raw;
-    const found=[];
-    phrases.forEach(p=>{const i=r.indexOf(p.text);if(i>=0)found.push({...p,i});});
-    found.sort((a,b)=>b.i-a.i);
-    found.forEach(p=>{
-      const bg=HL[s]+(p.dir>0?'bb':'66');
-      r=r.slice(0,p.i)+`<mark style="background:${bg};border-radius:3px;padding:1px 3px" title="${p.note}">${p.text}</mark>`+r.slice(p.i+p.text.length);
-    });
-    return r;
-  };
-  document.getElementById('textA').innerHTML=mark(A.text,s!==null?A.phrases[s]:null);
-  document.getElementById('textB').innerHTML=mark(B.text,s!==null?B.phrases[s]:null);
+  renderSents(A,'paneA',selDim);
+  renderSents(B,'paneB',selDim);
+  Plotly.react('sphere',buildSphereTraces(selDim),layout,{responsive:true,displayModeBar:false});
   const hint=document.getElementById('hint');
-  if(s===null){hint.textContent='click a row to highlight phrases';return;}
-  hint.innerHTML=`<span style="background:${HL[s]}bb;border-radius:3px;padding:1px 5px">${DIMS[s].name}</span> — darker = pushes toward <em>${DIMS[s].right}</em>, lighter = pulls toward <em>${DIMS[s].left}</em>. hover for note.`;
-}
-
-document.getElementById('mapCanvas').addEventListener('click',e=>{
-  const cv=document.getElementById('mapCanvas');
-  const r=cv.getBoundingClientRect();
-  const my=e.clientY-r.top;
-  const i=Math.floor((my-10)/54);
-  if(i>=0&&i<DIMS.length){sel=sel===i?null:i;draw(sel);applyHighlight(sel);}
+  const cite=document.getElementById('cite');
+  if(!selDim){
+    hint.textContent='click a dimension button to highlight phrases';
+    cite.style.display='none';
+  } else {
+    hint.innerHTML=`<span style="background:${DIM_HL[selDim]}66;border-radius:3px;padding:1px 6px">${selDim}</span> — darker mark = drives score up, lighter = pulls it down`;
+    cite.textContent=CITES[selDim];
+    cite.style.display='block';
+  }
 });
 
-draw(null); applyHighlight(null);
-window.addEventListener('resize',()=>draw(sel));
+// --- Synchronized scroll ---
+const pA=document.getElementById('paneA'), pB=document.getElementById('paneB');
+let syncing=false;
+function syncScroll(src,dst){
+  if(syncing)return;syncing=true;
+  const r=(src.scrollTop)/(src.scrollHeight-src.clientHeight||1);
+  dst.scrollTop=r*(dst.scrollHeight-dst.clientHeight||1);
+  syncing=false;
+}
+pA.addEventListener('scroll',()=>syncScroll(pA,pB));
+pB.addEventListener('scroll',()=>syncScroll(pB,pA));
 </script>
 </body>
 </html>
