@@ -1,0 +1,55 @@
+{
+  "label": "B — ChatGPT, structured spec (no skill)",
+  "description": "A precision-augmentation system that transforms vague language into context-optimized, audience-specific descriptions. Core engine: detects ambiguity in input text, generates candidate replacements across a vague-to-precise spectrum, and ranks them along a formal specificity axis. Context calibration: conditions outputs on audience, domain lexicons, cross-language precision, and emotional register. Personalization layer: learns user stylistic preferences through comparative selection, quizzes, and writing analysis. Output interfaces: inline replacement, precision sliders, and multimodal generation (text, image, video, graphs). Applications: targeting, applications, founder/company search, and skill articulation. Evaluation loop: A/B testing, user inspection, and self-improving skill updates.",
+  "sentences": [
+    {
+      "text": "A precision-augmentation system that transforms vague language into context-optimized, audience-specific descriptions.",
+      "concreteness": 0.50,
+      "valence": 0.08,
+      "type": "denotative"
+    },
+    {
+      "text": "Core engine: detects ambiguity in input text, generates candidate replacements across a vague-to-precise spectrum, and ranks them along a formal specificity axis.",
+      "concreteness": 0.83,
+      "valence": 0.05,
+      "type": "denotative"
+    },
+    {
+      "text": "Context calibration: conditions outputs on audience, domain lexicons, cross-language precision, and emotional register.",
+      "concreteness": 0.78,
+      "valence": 0.00,
+      "type": "pragmatic"
+    },
+    {
+      "text": "Personalization layer: learns user stylistic preferences through comparative selection, quizzes, and writing analysis.",
+      "concreteness": 0.80,
+      "valence": 0.05,
+      "type": "pragmatic"
+    },
+    {
+      "text": "Output interfaces: inline replacement, precision sliders, and multimodal generation (text, image, video, graphs).",
+      "concreteness": 0.95,
+      "valence": 0.00,
+      "type": "denotative"
+    },
+    {
+      "text": "Applications: targeting, applications, founder/company search, and skill articulation.",
+      "concreteness": 0.62,
+      "valence": 0.00,
+      "type": "pragmatic"
+    },
+    {
+      "text": "Evaluation loop: A/B testing, user inspection, and self-improving skill updates.",
+      "concreteness": 0.87,
+      "valence": 0.08,
+      "type": "pragmatic"
+    }
+  ],
+  "vector": [0.83, 0.12, 0.75],
+  "curve": [
+    { "label": "start", "pct": 100 },
+    { "label": "+ precision-augmentation, vague→precise", "pct": 0.8 },
+    { "label": "+ specificity axis + domain lexicons", "pct": 0.12 },
+    { "label": "+ A/B testing + self-improving", "pct": 0.04 }
+  ]
+}

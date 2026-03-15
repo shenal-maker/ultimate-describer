@@ -1,0 +1,45 @@
+{
+  "label": "A — ChatGPT (no skill)",
+  "description": "Fit-Referals turns hiring and talent discovery into a network-driven growth loop. Instead of static job posts, users create rich descriptions of ideal candidates, share trackable referral links, and watch trusted introductions propagate through real social graphs. Every forward and referral is attributed to a specific branch, giving employers unprecedented visibility into which communities, advocates, and messages actually produce high-quality candidates. With AI-assisted brief creation, viral sharing mechanics, and built-in graph analytics, the product can serve recruiters, founders, communities, and internal talent teams alike. It has the ingredients of a scalable marketplace for trusted human recommendations at internet scale globally today.",
+  "sentences": [
+    {
+      "text": "Fit-Referals turns hiring and talent discovery into a network-driven growth loop.",
+      "concreteness": 0.18,
+      "valence": 0.72,
+      "type": "connotative"
+    },
+    {
+      "text": "Instead of static job posts, users create rich descriptions of ideal candidates, share trackable referral links, and watch trusted introductions propagate through real social graphs.",
+      "concreteness": 0.52,
+      "valence": 0.38,
+      "type": "denotative"
+    },
+    {
+      "text": "Every forward and referral is attributed to a specific branch, giving employers unprecedented visibility into which communities, advocates, and messages actually produce high-quality candidates.",
+      "concreteness": 0.42,
+      "valence": 0.55,
+      "type": "denotative"
+    },
+    {
+      "text": "With AI-assisted brief creation, viral sharing mechanics, and built-in graph analytics, the product can serve recruiters, founders, communities, and internal talent teams alike.",
+      "concreteness": 0.48,
+      "valence": 0.30,
+      "type": "pragmatic"
+    },
+    {
+      "text": "It has the ingredients of a scalable marketplace for trusted human recommendations at internet scale globally today.",
+      "concreteness": 0.06,
+      "valence": 0.80,
+      "type": "connotative"
+    }
+  ],
+  "vector": [0.38, 0.72, 0.33],
+  "curve": [
+    { "label": "start", "pct": 100 },
+    { "label": "+ network-driven referral product", "pct": 8 },
+    { "label": "+ tracks forwarding chains / branches", "pct": 1.2 },
+    { "label": "+ graph analytics", "pct": 0.4 },
+    { "label": "+ AI-assisted creation", "pct": 0.15 },
+    { "label": "+ 3 more vague claims", "pct": 0.12 }
+  ]
+}

@@ -12,9 +12,10 @@
   --txt:#1A1A18;--txt2:#6B7280;--txt3:#9CA3AF;
   --a:#2563EB;--b:#D97706;
   --mono:'JetBrains Mono',monospace;
+  --green:#10B981;--red:#EF4444;
 }
 body{background:var(--bg);color:var(--txt);font-family:Inter,sans-serif;font-size:13px;line-height:1.6;min-height:100vh}
-.wrap{max-width:1100px;margin:0 auto;padding:28px 24px}
+.wrap{max-width:1160px;margin:0 auto;padding:28px 24px}
 header{border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:28px;display:flex;align-items:baseline;gap:14px}
 h1{font-family:var(--mono);font-size:15px;font-weight:600;letter-spacing:-0.02em}
 .sub{font-size:11px;color:var(--txt3)}
@@ -31,7 +32,7 @@ label{display:block;font-size:10px;font-weight:700;letter-spacing:0.07em;text-tr
 textarea{width:100%;border:1px solid var(--border);border-radius:5px;padding:8px 10px;font-family:var(--mono);font-size:10px;color:var(--txt);background:var(--surface);outline:none;resize:vertical;line-height:1.5}
 textarea:focus{border-color:var(--txt3)}
 .vs{text-align:center;font-size:10px;color:var(--txt3);letter-spacing:.1em;padding:6px 0}
-btn,button{display:block;width:100%;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:5px;font-family:inherit;font-size:12px;font-weight:500;color:var(--txt);cursor:pointer;transition:all .15s;margin-top:6px}
+button{display:block;width:100%;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:5px;font-family:inherit;font-size:12px;font-weight:500;color:var(--txt);cursor:pointer;transition:all .15s;margin-top:6px}
 button:hover{background:var(--txt);color:#fff;border-color:var(--txt)}
 .err{background:#FEF2F2;border:1px solid #FECACA;border-radius:5px;padding:8px 10px;color:#DC2626;font-size:11px;margin-top:8px;display:none}
 
@@ -40,67 +41,81 @@ button:hover{background:var(--txt);color:#fff;border-color:var(--txt)}
 .sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--txt3);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:14px}
 .hidden{display:none}
 
-/* text heat panels */
+/* concreteness heat */
 .heat-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .heat-panel{border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:14px}
-.heat-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
-.heat-label span{display:inline-block;padding:1px 7px;border-radius:3px;font-family:var(--mono)}
+.heat-lbl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+.heat-lbl span{display:inline-block;padding:1px 7px;border-radius:3px;font-family:var(--mono)}
 .hl-a{background:#DBEAFE;color:var(--a)}.hl-b{background:#FEF3C7;color:var(--b)}
-.sentence{display:block;border-radius:3px;padding:2px 4px;margin-bottom:3px;line-height:1.6;font-size:13px;cursor:default;transition:opacity .1s}
-.sentence:hover{opacity:.8}
+.sentence{display:block;border-left:3px solid var(--border);padding:3px 7px;margin-bottom:5px;line-height:1.6;font-size:13px;cursor:default;border-radius:0 3px 3px 0;position:relative}
+.sentence:hover{opacity:.85}
+.cit-badge{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle;cursor:help}
+.cit-risk{background:#FEF2F2;color:#DC2626;border:1px solid #FECACA}
+.cit-lift{background:#ECFDF5;color:#059669;border:1px solid #A7F3D0}
+.cit-warn{background:#FFFBEB;color:#B45309;border:1px solid #FDE68A}
 
-/* legend */
-.heat-legend{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+/* heat legend */
+.heat-legend{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;align-items:center}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--txt3)}
-.legend-swatch{width:12px;height:12px;border-radius:2px}
+.legend-swatch{width:28px;height:10px;border-radius:2px}
+.legend-grad{background:linear-gradient(to right,#EF4444,#10B981)}
+.legend-border-g{width:3px;height:12px;background:var(--green);border-radius:2px}
+.legend-border-r{width:3px;height:12px;background:var(--red);border-radius:2px}
 
-/* dual curve */
+/* curve */
 #curveCanvas{width:100%;border:1px solid var(--border);border-radius:6px;background:var(--surface)}
 
-/* precision triangle */
-.tri-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center}
-#triCanvas{width:100%}
-.tri-legend{font-size:12px}
-.tri-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.tri-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.tri-axis{font-size:11px;color:var(--txt2);margin-bottom:2px}
-.tri-bar-bg{height:4px;background:#F3F4F6;border-radius:2px;width:160px;position:relative}
-.tri-bar-a{height:4px;border-radius:2px;background:var(--a);position:absolute;top:0;left:0}
-.tri-bar-b{height:4px;border-radius:2px;background:var(--b);opacity:.7;position:absolute;bottom:-5px;left:0}
+/* 3D plot */
+.vec-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+#vecCanvas{width:100%;border:1px solid var(--border);border-radius:6px;background:var(--surface)}
+.vec-legend{font-size:12px}
+.vec-dot-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.vec-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.vec-axis-row{margin-bottom:10px}
+.vec-axis-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.vec-bar-wrap{position:relative;height:14px;width:170px}
+.vec-bar{position:absolute;top:0;left:0;height:5px;border-radius:2px}
+.vec-bar-b{top:7px;opacity:.8}
+.vec-cit{font-size:9px;color:var(--txt3);margin-top:2px;font-family:var(--mono)}
+.vec-delta{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--txt2);line-height:1.8}
+.vec-delta strong{color:var(--txt)}
 
 /* tooltip */
-.tip{position:fixed;background:#1A1A18;color:#fff;font-size:11px;padding:6px 10px;border-radius:4px;pointer-events:none;display:none;z-index:100;max-width:220px;line-height:1.5}
+.tip{position:fixed;background:#1A1A18;color:#fff;font-size:11px;padding:8px 11px;border-radius:5px;pointer-events:none;display:none;z-index:100;max-width:260px;line-height:1.5}
+.tip-cite{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.15);font-size:10px;color:#D1D5DB;font-style:italic}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>ultimate describer</h1>
-    <span class="sub">comparative precision visualization</span>
+    <span class="sub">comparative precision visualization · denotative · connotative · pragmatic</span>
   </header>
   <div class="layout">
     <!-- sidebar -->
     <div class="sidebar">
       <div class="field">
         <label class="la">A — baseline</label>
-        <textarea id="jsonA" rows="10" placeholder='{"label":"A","description":"...","sentences":[{"text":"...","heat":0.2,"type":"denotative"}],"precision":{"denotative":0.5,"connotative":0.5,"pragmatic":0.5},"curve":[{"label":"start","pct":100}]}'></textarea>
+        <textarea id="jsonA" rows="10" placeholder='paste description JSON here'></textarea>
       </div>
       <div class="vs">vs</div>
       <div class="field">
         <label class="lb">B — with skill</label>
-        <textarea id="jsonB" rows="10" placeholder='{"label":"B","description":"...","sentences":[...],...}'></textarea>
+        <textarea id="jsonB" rows="10" placeholder='paste description JSON here'></textarea>
       </div>
       <button onclick="run()">compare &#8594;</button>
       <div class="err" id="err"></div>
       <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border)">
-        <div style="font-size:10px;color:var(--txt3);line-height:1.8">
-          <div style="margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">json schema</div>
+        <div style="font-size:10px;color:var(--txt3);line-height:2">
+          <div style="margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">json schema</div>
           <code style="font-family:var(--mono);font-size:9px;color:var(--txt3)">
-            label · description · sentences[]<br>
-            &nbsp;↳ text · heat (0–1) · type<br>
-            &nbsp;&nbsp;&nbsp;(denotative|connotative|pragmatic)<br>
-            precision · denotative · connotative<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;· pragmatic<br>
+            label · description<br>
+            sentences[]<br>
+            &nbsp;↳ text<br>
+            &nbsp;↳ concreteness (0–1)<br>
+            &nbsp;↳ valence (−1 to +1)<br>
+            &nbsp;↳ type (denotative|connotative|pragmatic)<br>
+            vector [denotative, connotative, pragmatic]<br>
             curve[] · label · pct (0–100)
           </code>
         </div>
@@ -110,30 +125,31 @@ button:hover{background:var(--txt);color:#fff;border-color:var(--txt)}
     <!-- main -->
     <div class="main hidden" id="results">
 
-      <!-- text heat -->
+      <!-- concreteness heat -->
       <div class="sec">
-        <div class="sec-title">sentence precision heat</div>
+        <div class="sec-title">concreteness heat — sentence-level precision signal</div>
         <div class="heat-grid" id="heatGrid"></div>
         <div class="heat-legend">
-          <div class="legend-item"><div class="legend-swatch" style="background:#FDE68A"></div>denotative (referent)</div>
-          <div class="legend-item"><div class="legend-swatch" style="background:#A7F3D0"></div>connotative (tonal)</div>
-          <div class="legend-item"><div class="legend-swatch" style="background:#BFDBFE"></div>pragmatic (goal)</div>
-          <div class="legend-item"><div class="legend-swatch" style="background:#F3F4F6;border:1px solid #E5E7EB"></div>generic</div>
+          <div class="legend-item"><div class="legend-swatch legend-grad"></div>abstract → concrete</div>
+          <div class="legend-item"><div class="legend-border-g"></div>positive frame</div>
+          <div class="legend-item"><div class="legend-border-r"></div>negative frame</div>
+          <div class="legend-item"><span class="cit-badge cit-risk">−risk</span>research citation on hover</div>
+          <div class="legend-item"><span class="cit-badge cit-lift">+lift</span>research citation on hover</div>
         </div>
       </div>
 
-      <!-- dual curve -->
+      <!-- discrimination curve -->
       <div class="sec">
-        <div class="sec-title">discrimination curve — % corpus remaining · shaded gap = &#916;I</div>
+        <div class="sec-title">narrowing curve — matching descriptions remaining · shaded gap = information gained by skill</div>
         <canvas id="curveCanvas" height="220"></canvas>
       </div>
 
-      <!-- precision triangle -->
+      <!-- 3D vector -->
       <div class="sec">
-        <div class="sec-title">precision triangle — denotative · connotative · pragmatic</div>
-        <div class="tri-grid">
-          <canvas id="triCanvas" height="260"></canvas>
-          <div class="tri-legend" id="triLegend"></div>
+        <div class="sec-title">precision vector — denotative · connotative · pragmatic in 3D space</div>
+        <div class="vec-grid">
+          <canvas id="vecCanvas" height="300"></canvas>
+          <div class="vec-legend" id="vecLegend"></div>
         </div>
       </div>
 
@@ -144,8 +160,50 @@ button:hover{background:var(--txt);color:#fff;border-color:var(--txt)}
 <div class="tip" id="tip"></div>
 
 <script>
-let curveChart = null;
+// ── Citations ─────────────────────────────────────────────────────────────────
+const CITATIONS = {
+  low_concreteness: {
+    badge: '−9% engagement risk', cls: 'cit-risk',
+    full: 'Abstract language reduces satisfaction ~9% and spending ~13%. In email, concrete language drove 30% more spending. Even a single word swap shifts outcomes.\n— Packard & Berger (2021), Journal of Consumer Research'
+  },
+  high_concreteness: {
+    badge: '+30% written engagement', cls: 'cit-lift',
+    full: 'Concrete language drove 30% more spending in written interactions. Saying "shirt" instead of "that" shifted purchasing behavior.\n— Packard & Berger (2021), Journal of Consumer Research'
+  },
+  negative_framing: {
+    badge: '−34pt framing risk', cls: 'cit-risk',
+    full: 'Negative framing shifts decisions 34 points for identical information — preference for surgery swung from 84% to 50% between "90% survival" vs "10% mortality."\n— McNeil et al. (1982); replicated at 61 points (2020)'
+  },
+  positive_heavy: {
+    badge: 'framing effect active', cls: 'cit-warn',
+    full: 'Positive framing changed sensory perception itself, not just judgment (d≈1). Ground beef rated as tastier when labeled "75% lean" vs "25% fat" — even after tasting.\n— Levin & Gaeth (1988)'
+  },
+  word_level: {
+    badge: 'single-word effect', cls: 'cit-warn',
+    full: '"Smashed" vs "hit" — one word doubled the rate of false memory formation (32% vs 14%) and shifted speed estimates by 28%. One word, asked once, changed court testimony worldwide.\n— Loftus & Palmer (1974)'
+  }
+};
 
+function getCitation(s) {
+  const c = s.concreteness ?? s.heat ?? 0.5;
+  const v = s.valence ?? 0;
+  if (c < 0.3) return CITATIONS.low_concreteness;
+  if (c > 0.75) return CITATIONS.high_concreteness;
+  if (v < -0.3) return CITATIONS.negative_framing;
+  if (v > 0.65) return CITATIONS.positive_heavy;
+  if (c < 0.45 && Math.abs(v) > 0.2) return CITATIONS.word_level;
+  return null;
+}
+
+function concrColor(v, alpha) {
+  // 0=abstract (red) → 1=concrete (green)
+  const r = Math.round(239 + (16  - 239) * v);
+  const g = Math.round(68  + (185 - 68)  * v);
+  const b = Math.round(68  + (129 - 68)  * v);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ── Run ───────────────────────────────────────────────────────────────────────
 function run() {
   const eb = document.getElementById('err');
   eb.style.display = 'none';
@@ -154,35 +212,35 @@ function run() {
   catch(e) { eb.textContent = 'A: ' + e.message; eb.style.display = 'block'; return; }
   try { b = JSON.parse(document.getElementById('jsonB').value.trim()); }
   catch(e) { eb.textContent = 'B: ' + e.message; eb.style.display = 'block'; return; }
-
   document.getElementById('results').classList.remove('hidden');
   renderHeat(a, b);
   renderCurve(a, b);
-  renderTriangle(a, b);
+  render3D(a, b);
 }
 
-// ── heat ─────────────────────────────────────────────────────────────────────
-const typeColor = (type, heat) => {
-  const h = Math.max(heat, 0.05);
-  if (type === 'denotative')  return `rgba(251,191,36,${h * 0.7})`;   // amber
-  if (type === 'connotative') return `rgba(52,211,153,${h * 0.6})`;   // green
-  if (type === 'pragmatic')   return `rgba(96,165,250,${h * 0.6})`;   // blue
-  return `rgba(200,200,200,${h * 0.3})`;
-};
-
+// ── Concreteness Heat ─────────────────────────────────────────────────────────
 function renderHeat(a, b) {
-  const tip = document.getElementById('tip');
   const panel = (data, tag, tagClass) => {
-    const sentences = (data.sentences || [{ text: data.description || '', heat: 0.5, type: 'denotative' }]);
+    const sentences = data.sentences || [{ text: data.description || '', concreteness: 0.5, valence: 0, type: 'denotative' }];
     const rows = sentences.map(s => {
-      const bg = typeColor(s.type, s.heat);
-      const label = s.type ? `${s.type} · ${Math.round(s.heat * 100)}% distinctive` : 'generic';
-      return `<span class="sentence" style="background:${bg}"
-        onmouseenter="showTip(event,'${label.replace(/'/g,"&#39;")}')"
-        onmouseleave="hideTip()">${s.text}</span>`;
+      const c = s.concreteness ?? s.heat ?? 0.5;
+      const v = s.valence ?? 0;
+      const bg    = concrColor(c, 0.12 + c * 0.25);
+      const border = v > 0.2 ? 'var(--green)' : v < -0.2 ? 'var(--red)' : 'var(--border)';
+      const cit = getCitation(s);
+      const badge = cit ? `<span class="cit-badge ${cit.cls}">${cit.badge}</span>` : '';
+      const tipText = [
+        `concreteness: ${c.toFixed(2)}  valence: ${(v>=0?'+':'')}${v.toFixed(2)}`,
+        s.type ? `type: ${s.type}` : '',
+        cit ? `\n${cit.full}` : ''
+      ].filter(Boolean).join('\n');
+      return `<span class="sentence"
+        style="background:${bg};border-left-color:${border}"
+        onmouseenter="showTip(event,${JSON.stringify(tipText)})"
+        onmouseleave="hideTip()">${s.text}${badge}</span>`;
     }).join('');
     return `<div class="heat-panel">
-      <div class="heat-label"><span class="${tagClass}">${tag}</span></div>
+      <div class="heat-lbl"><span class="${tagClass}">${tag}</span></div>
       <div>${rows}</div>
     </div>`;
   };
@@ -191,16 +249,20 @@ function renderHeat(a, b) {
     panel(b, b.label || 'B', 'hl-b');
 }
 
+// ── Tooltip ───────────────────────────────────────────────────────────────────
 function showTip(e, text) {
   const t = document.getElementById('tip');
-  t.textContent = text;
+  const parts = text.split('\n\n');
+  const main = parts[0].replace(/\n/g,'<br>');
+  const cite = parts[1] ? `<div class="tip-cite">${parts[1].replace(/\n/g,'<br>')}</div>` : '';
+  t.innerHTML = main + cite;
   t.style.display = 'block';
-  t.style.left = (e.clientX + 12) + 'px';
-  t.style.top  = (e.clientY - 28) + 'px';
+  t.style.left = (e.clientX + 14) + 'px';
+  t.style.top  = (e.clientY - 32) + 'px';
 }
 function hideTip() { document.getElementById('tip').style.display = 'none'; }
 
-// ── curve ─────────────────────────────────────────────────────────────────────
+// ── Narrowing Curve ───────────────────────────────────────────────────────────
 function renderCurve(a, b) {
   const canvas = document.getElementById('curveCanvas');
   const dpr = window.devicePixelRatio || 1;
@@ -210,23 +272,24 @@ function renderCurve(a, b) {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const pad = { top: 20, right: 24, bottom: 36, left: 44 };
+  const pad = { top: 20, right: 30, bottom: 36, left: 52 };
   const iW = W - pad.left - pad.right;
   const iH = H - pad.top - pad.bottom;
 
-  const stepsA = (a.curve || [{ label:'start', pct:100 }]);
-  const stepsB = (b.curve || [{ label:'start', pct:100 }]);
+  const stepsA = a.curve || [{ label:'start', pct:100 }];
+  const stepsB = b.curve || [{ label:'start', pct:100 }];
   const maxN = Math.max(stepsA.length, stepsB.length) - 1;
 
-  const toX = i  => pad.left + (i / Math.max(maxN, 1)) * iW;
-  const toY = pct => pad.top + iH - (pct / 100) * iH;
+  const toX = i   => pad.left + (i / Math.max(maxN, 1)) * iW;
+  const toY = pct => pad.top  + iH - (pct / 100) * iH;
 
   // grid
   ctx.strokeStyle = '#F3F4F6'; ctx.lineWidth = 1;
-  [25, 50, 75, 100].forEach(v => {
+  [0, 25, 50, 75, 100].forEach(v => {
     ctx.beginPath(); ctx.moveTo(pad.left, toY(v)); ctx.lineTo(pad.left + iW, toY(v)); ctx.stroke();
     ctx.fillStyle = '#9CA3AF'; ctx.font = '9px JetBrains Mono,monospace'; ctx.textAlign = 'right';
-    ctx.fillText(v + '%', pad.left - 5, toY(v) + 3);
+    const lbl = v === 100 ? 'all' : v === 0 ? 'one' : v + '%';
+    ctx.fillText(lbl, pad.left - 6, toY(v) + 3);
   });
 
   // axes
@@ -234,161 +297,174 @@ function renderCurve(a, b) {
   ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + iH); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(pad.left, pad.top + iH); ctx.lineTo(pad.left + iW, pad.top + iH); ctx.stroke();
 
-  // axis labels
   ctx.fillStyle = '#9CA3AF'; ctx.font = '9px Inter,sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('claims added', pad.left + iW / 2, H - 4);
-  ctx.save(); ctx.translate(11, pad.top + iH / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillText('% corpus remaining', 0, 0); ctx.restore();
+  ctx.fillText('claims added →', pad.left + iW / 2, H - 4);
+  ctx.save(); ctx.translate(12, pad.top + iH / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('matching descriptions', 0, 0); ctx.restore();
 
-  // shaded gap between A and B
+  // shaded gap
   ctx.beginPath();
   stepsA.forEach((s, i) => i === 0 ? ctx.moveTo(toX(i), toY(s.pct)) : ctx.lineTo(toX(i), toY(s.pct)));
-  for (let i = Math.min(stepsB.length, stepsA.length) - 1; i >= 0; i--) {
-    ctx.lineTo(toX(i), toY(stepsB[i].pct));
-  }
+  const overlap = Math.min(stepsB.length, stepsA.length);
+  for (let i = overlap - 1; i >= 0; i--) ctx.lineTo(toX(i), toY(stepsB[i].pct));
   ctx.closePath();
-  ctx.fillStyle = 'rgba(217,119,6,0.08)';
-  ctx.fill();
+  ctx.fillStyle = 'rgba(217,119,6,0.07)'; ctx.fill();
 
-  // draw curve fn
-  const drawLine = (steps, color) => {
+  const drawLine = (steps, color, labelStr) => {
     ctx.beginPath();
-    steps.forEach((s, i) => {
-      const x = toX(i), y = toY(s.pct);
-      if (i === 0) ctx.moveTo(x, y);
-      else { ctx.lineTo(x, y); }  // stepped
-    });
+    steps.forEach((s, i) => i === 0 ? ctx.moveTo(toX(i), toY(s.pct)) : ctx.lineTo(toX(i), toY(s.pct)));
     ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
-    // dots
     steps.forEach((s, i) => {
-      ctx.beginPath(); ctx.arc(toX(i), toY(s.pct), 4, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.arc(toX(i), toY(s.pct), 3.5, 0, Math.PI * 2);
       ctx.fillStyle = color; ctx.fill();
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
     });
-  };
-
-  drawLine(stepsA, '#2563EB');
-  drawLine(stepsB, '#D97706');
-
-  // labels on last points
-  const labelPt = (steps, color, side) => {
     const last = steps[steps.length - 1];
-    const x = toX(steps.length - 1), y = toY(last.pct);
-    ctx.fillStyle = color; ctx.font = 'bold 10px Inter'; ctx.textAlign = side === 'l' ? 'right' : 'left';
-    ctx.fillText(side === 'l' ? (a.label || 'A') : (b.label || 'B'), x + (side === 'l' ? -7 : 7), y + 3);
+    ctx.fillStyle = color; ctx.font = 'bold 10px Inter'; ctx.textAlign = 'left';
+    ctx.fillText(labelStr, toX(steps.length - 1) + 7, toY(last.pct) + 3);
   };
-  labelPt(stepsA, '#2563EB', 'l');
-  labelPt(stepsB, '#D97706', 'r');
 
-  // ΔI annotation
+  drawLine(stepsA, '#2563EB', a.label || 'A');
+  drawLine(stepsB, '#D97706', b.label || 'B');
+
+  // ΔI label
   const lastA = stepsA[stepsA.length - 1].pct;
   const lastB = stepsB[stepsB.length - 1].pct;
-  if (Math.abs(lastA - lastB) > 2) {
-    const midX = toX(Math.min(stepsA.length, stepsB.length) - 1) - 20;
+  if (Math.abs(lastA - lastB) > 3) {
+    const midX = toX(Math.min(stepsA.length, stepsB.length) - 1) - 16;
     const midY = (toY(lastA) + toY(lastB)) / 2;
     ctx.fillStyle = '#D97706'; ctx.font = '10px Inter'; ctx.textAlign = 'right';
     ctx.fillText('ΔI', midX, midY);
   }
 }
 
-// ── triangle ──────────────────────────────────────────────────────────────────
-function renderTriangle(a, b) {
-  const canvas = document.getElementById('triCanvas');
+// ── 3D Isometric Vector Plot ──────────────────────────────────────────────────
+function isoProject(d, c, p, cx, cy, r) {
+  // denotative → lower-left, connotative → up, pragmatic → lower-right
+  return {
+    x: cx + (p - d) * r * Math.sqrt(3) / 2,
+    y: cy + (d + p) * r * 0.5 - c * r
+  };
+}
+
+function render3D(a, b) {
+  const canvas = document.getElementById('vecCanvas');
   const dpr = window.devicePixelRatio || 1;
-  const W = canvas.offsetWidth || 300, H = 260;
+  const W = canvas.offsetWidth || 340, H = 300;
   canvas.width = W * dpr; canvas.height = H * dpr;
   canvas.style.height = H + 'px';
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const cx = W / 2, cy = H / 2 + 10, R = Math.min(W, H) * 0.38;
+  const cx = W / 2, cy = H * 0.62, r = Math.min(W, H) * 0.33;
 
-  // equilateral triangle vertices (top, bottom-right, bottom-left)
-  const verts = [
-    { x: cx, y: cy - R, label: 'denotative' },
-    { x: cx + R * Math.sin(2 * Math.PI / 3), y: cy - R * Math.cos(2 * Math.PI / 3), label: 'connotative' },
-    { x: cx + R * Math.sin(4 * Math.PI / 3), y: cy - R * Math.cos(4 * Math.PI / 3), label: 'pragmatic' },
+  const vecA = a.vector || [a.precision?.denotative||0, a.precision?.connotative||0, a.precision?.pragmatic||0];
+  const vecB = b.vector || [b.precision?.denotative||0, b.precision?.connotative||0, b.precision?.pragmatic||0];
+
+  // draw cube wireframe
+  const verts = [[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1]];
+  const edges = [
+    [0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]
   ];
+  const backEdges = new Set(['0,1','0,2','0,3']);
 
-  // grid triangles
-  [0.25, 0.5, 0.75, 1].forEach(f => {
-    ctx.beginPath();
-    verts.forEach((v, i) => {
-      const x = cx + (v.x - cx) * f, y = cy + (v.y - cy) * f;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.closePath();
-    ctx.strokeStyle = '#E8E8E5'; ctx.lineWidth = 1; ctx.stroke();
+  edges.forEach(([i,j]) => {
+    const key = `${i},${j}`;
+    const isBack = backEdges.has(key);
+    const pa = isoProject(...verts[i], cx, cy, r);
+    const pb = isoProject(...verts[j], cx, cy, r);
+    ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
+    ctx.strokeStyle = isBack ? '#F0F0EE' : '#E2E2DF';
+    ctx.lineWidth = isBack ? 0.8 : 1;
+    if (isBack) ctx.setLineDash([3,3]); else ctx.setLineDash([]);
+    ctx.stroke();
   });
-  // spokes
-  verts.forEach(v => {
-    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(v.x, v.y);
-    ctx.strokeStyle = '#E8E8E5'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.setLineDash([]);
+
+  // axis labels with citation numbers
+  const axisLabels = [
+    { pt: [1.18, 0, 0], text: 'denotative', sub: 'concrete/specific ¹', color: '#4B5563' },
+    { pt: [0, 1.18, 0], text: 'connotative', sub: 'tone/framing ²',      color: '#4B5563' },
+    { pt: [0, 0, 1.18], text: 'pragmatic',   sub: 'audience fit ³',       color: '#4B5563' },
+  ];
+  axisLabels.forEach(({ pt, text, sub, color }) => {
+    const p = isoProject(...pt, cx, cy, r);
+    ctx.fillStyle = color;
+    ctx.font = 'bold 10px Inter'; ctx.textAlign = 'center';
+    ctx.fillText(text, p.x, p.y);
+    ctx.font = '9px JetBrains Mono,monospace'; ctx.fillStyle = '#9CA3AF';
+    ctx.fillText(sub, p.x, p.y + 12);
   });
 
-  // filled polygon fn
-  const drawPoly = (data, color, alpha) => {
-    const p = data.precision || {};
-    const vals = [p.denotative || 0, p.connotative || 0, p.pragmatic || 0];
-    ctx.beginPath();
-    verts.forEach((v, i) => {
-      const x = cx + (v.x - cx) * vals[i], y = cy + (v.y - cy) * vals[i];
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.closePath();
-    ctx.fillStyle = color.replace('1)', alpha + ')'); ctx.fill();
-    ctx.strokeStyle = color.replace('rgba', 'rgb').replace(',1)', ')').replace(/,[\d.]+\)$/, ')');
-    ctx.lineWidth = 2; ctx.stroke();
-    // dots
-    verts.forEach((v, i) => {
-      const val = vals[i];
-      const x = cx + (v.x - cx) * val, y = cy + (v.y - cy) * val;
-      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = color.replace(',1)', ',1)'); ctx.fill();
-    });
+  // draw a dot with floor shadow
+  const drawPoint = (vec, color, label) => {
+    const [d, c, p] = vec;
+    // floor shadow
+    const floor = isoProject(d, 0, p, cx, cy, r);
+    ctx.beginPath(); ctx.arc(floor.x, floor.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = color + '30'; ctx.fill();
+    // vertical line to floor
+    const pt = isoProject(d, c, p, cx, cy, r);
+    ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(floor.x, floor.y);
+    ctx.strokeStyle = color + '40'; ctx.lineWidth = 1; ctx.setLineDash([2,2]); ctx.stroke();
+    ctx.setLineDash([]);
+    // point
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    // label
+    ctx.fillStyle = color; ctx.font = 'bold 10px Inter'; ctx.textAlign = 'left';
+    ctx.fillText(label, pt.x + 9, pt.y + 3);
   };
 
-  drawPoly(a, 'rgba(37,99,235,1)',  '0.12');
-  drawPoly(b, 'rgba(217,119,6,1)',  '0.12');
+  // delta vector line
+  const ptA = isoProject(...vecA, cx, cy, r);
+  const ptB = isoProject(...vecB, cx, cy, r);
+  ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptB.x, ptB.y);
+  ctx.strokeStyle = '#E5E7EB'; ctx.lineWidth = 1.5; ctx.stroke();
 
-  // vertex labels
-  ctx.fillStyle = '#6B7280'; ctx.font = '11px Inter';
-  verts.forEach(v => {
-    ctx.textAlign = v.x < cx - 5 ? 'right' : v.x > cx + 5 ? 'left' : 'center';
-    const offY = v.y < cy ? -10 : 14;
-    ctx.fillText(v.label, v.x, v.y + offY);
-  });
+  drawPoint(vecA, '#2563EB', a.label || 'A');
+  drawPoint(vecB, '#D97706', b.label || 'B');
 
-  // legend sidebar
-  const pa = a.precision || {}, pb = b.precision || {};
-  const dims = ['denotative','connotative','pragmatic'];
-  const labels = { denotative:'referent narrowing', connotative:'tonal accuracy', pragmatic:'goal achievement' };
-  document.getElementById('triLegend').innerHTML = `
-    <div style="display:flex;gap:14px;margin-bottom:12px">
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:10px;height:10px;border-radius:50%;background:#2563EB"></div>${a.label||'A'}</div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:10px;height:10px;border-radius:50%;background:#D97706"></div>${b.label||'B'}</div>
+  // ── legend ──
+  const [dA, cA, pA] = vecA;
+  const [dB, cB, pB] = vecB;
+  const dims = [
+    { key:'denotative', labelA: dA, labelB: dB, cit:'¹ +13% spending · Packard & Berger (2021)' },
+    { key:'connotative', labelA: cA, labelB: cB, cit:'² 34pt framing swing · McNeil et al. (1982)' },
+    { key:'pragmatic',   labelA: pA, labelB: pB, cit:'³ audience mismatch ↓ belonging · Gaucher et al. (2011)' },
+  ];
+
+  const dist = Math.sqrt((dB-dA)**2 + (cB-cA)**2 + (pB-pA)**2).toFixed(3);
+  const deltaSign = v => (v > 0 ? '+' : '') + v.toFixed(2);
+
+  document.getElementById('vecLegend').innerHTML = `
+    <div style="display:flex;gap:14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px">
+        <div style="width:10px;height:10px;border-radius:50%;background:#2563EB"></div>${a.label||'A'}
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px">
+        <div style="width:10px;height:10px;border-radius:50%;background:#D97706"></div>${b.label||'B'}
+      </div>
     </div>
     ${dims.map(d => `
-      <div style="margin-bottom:10px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">${d} <span style="color:var(--txt2);font-size:9px">· ${labels[d]}</span></div>
-        <div style="position:relative;height:14px;width:160px">
-          <div style="position:absolute;top:0;left:0;height:5px;background:#2563EB;border-radius:2px;width:${(pa[d]||0)*160}px"></div>
-          <div style="position:absolute;top:7px;left:0;height:5px;background:#D97706;border-radius:2px;width:${(pb[d]||0)*160}px;opacity:.8"></div>
+      <div class="vec-axis-row">
+        <div class="vec-axis-label">${d.key}</div>
+        <div class="vec-bar-wrap">
+          <div class="vec-bar" style="background:#2563EB;width:${d.labelA*170}px"></div>
+          <div class="vec-bar vec-bar-b" style="background:#D97706;width:${d.labelB*170}px"></div>
         </div>
+        <div style="font-size:10px;color:var(--txt3);margin-top:3px;font-family:var(--mono)">
+          A: ${d.labelA.toFixed(2)} → B: ${d.labelB.toFixed(2)}
+          <span style="color:${d.labelB>=d.labelA?'var(--green)':'var(--red)'}">(${deltaSign(d.labelB-d.labelA)})</span>
+        </div>
+        <div class="vec-cit">${d.cit}</div>
       </div>
     `).join('')}
-    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--txt3);line-height:1.8">
-      <div><span style="color:#2563EB;font-weight:600">${a.label||'A'}</span> area: ${triArea(a).toFixed(3)}</div>
-      <div><span style="color:#D97706;font-weight:600">${b.label||'B'}</span> area: ${triArea(b).toFixed(3)}</div>
-      <div style="margin-top:4px">Δ area: ${(triArea(b)-triArea(a)).toFixed(3)}</div>
+    <div class="vec-delta">
+      <strong>vector distance A→B:</strong> ${dist}<br>
+      <span style="font-size:10px;color:var(--txt3)">Euclidean distance in precision space. Larger = more different descriptions.</span>
     </div>`;
-}
-
-function triArea(d) {
-  const p = d.precision || {};
-  const a = p.denotative || 0, b = p.connotative || 0, c = p.pragmatic || 0;
-  // area of triangle formed by three points on unit equilateral triangle
-  return 0.5 * Math.abs(a * b * Math.sin(2*Math.PI/3) + b * c * Math.sin(2*Math.PI/3) + c * a * Math.sin(2*Math.PI/3));
 }
 </script>
 </body>
