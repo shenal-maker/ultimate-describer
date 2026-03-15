@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>description precision report</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#faf9f5;background-image:linear-gradient(rgba(120,90,50,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(120,90,50,.08) 1px,transparent 1px);background-size:24px 24px;font-family:'Caveat',cursive;color:#1a1a1a;padding:26px 30px;min-height:100vh;font-size:20px}
+h1{font-size:40px;font-weight:700}
+.sub{font-size:14px;color:#aaa;margin-top:4px;margin-bottom:18px;border-bottom:2px dashed #ddd5c5;padding-bottom:10px;font-family:'JetBrains Mono',monospace}
+.box{border:2px dashed #ccc3b0;border-radius:5px;background:rgba(255,253,248,.92);padding:14px}
+.box-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#bbb;margin-bottom:12px;font-family:'JetBrains Mono',monospace}
+.top{display:grid;grid-template-columns:56% 44%;gap:16px;margin-bottom:16px;align-items:start}
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.picker{display:flex;flex-direction:column;gap:6px}
+.picker label,.meta-line{font-family:'JetBrains Mono',monospace;font-size:13px;color:#8a8377}
+select{font-family:'JetBrains Mono',monospace;font-size:14px;padding:10px 12px;border:2px dashed #ccc3b0;background:#fffdf8;border-radius:4px;min-width:260px}
+textarea,input,button{font-family:'JetBrains Mono',monospace}
+button{font-size:14px;padding:11px 14px;border:2px dashed #bfae93;background:#f7f1e6;border-radius:4px;cursor:pointer;color:#43331f}
+button:hover{background:#f0e7d8}
+.composer{display:none;margin-bottom:16px}
+.composer.is-visible{display:block}
+.composer-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.8fr);gap:12px;align-items:start}
+.prompt-input{width:100%;min-height:132px;padding:12px;border:2px dashed #ccc3b0;background:#fffdf8;border-radius:4px;font-size:14px;line-height:1.6;resize:vertical}
+.composer-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
+.helper{font-family:'JetBrains Mono',monospace;font-size:12px;color:#8a8377;line-height:1.6}
+.live-panel{display:none;margin-bottom:16px}
+.live-panel.is-visible{display:block}
+.live-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.live-card{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#f5efe5;border:1px solid #ddd5c5;border-radius:4px;padding:12px}
+.live-card strong{display:block;font-size:13px;color:#40362b;margin-bottom:4px}
+.phase{display:inline-flex;align-items:center;gap:6px}
+.phase::before{content:'';width:8px;height:8px;border-radius:50%;background:#c8b79c;display:inline-block}
+.phase.is-active::before{background:#d49a1f}
+.phase.is-done::before{background:#2D8A4E}
+.phase.is-idle::before{background:#c8b79c}
+.live-line{font-family:'JetBrains Mono',monospace;font-size:12px;color:#6e6659;margin-top:10px}
+.narrative{font-size:19px;line-height:1.7;margin-bottom:14px}
+.summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.summary-card{font-family:'JetBrains Mono',monospace;font-size:13px;padding:10px 12px;background:#f0ebe2;border:1px solid #ddd5c5;border-radius:3px;line-height:1.6}
+.summary-card strong{display:block;font-size:15px;font-weight:600;color:#1a1a1a}
+.scores-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:14px;margin-bottom:14px}
+.scores-table th{text-align:left;color:#bbb;font-weight:400;padding:2px 6px 6px 0}
+.scores-table td{padding:5px 6px 5px 0;vertical-align:middle}
+.score-val{font-weight:600}
+.score-bar-wrap{width:80px;display:inline-block;vertical-align:middle;background:#ede8df;border-radius:2px;height:5px;margin-left:5px}
+.score-bar{height:5px;border-radius:2px;display:inline-block}
+.delta{font-size:13px;color:#2D8A4E;margin-left:4px}
+.stat-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.stat{font-family:'JetBrains Mono',monospace;font-size:13px;padding:6px 10px;background:#f0ebe2;border:1px solid #ddd5c5;border-radius:3px;line-height:1.5}
+.stat strong{display:block;font-size:16px;font-weight:600}
+.split-wrap{padding:0;overflow:hidden;margin-bottom:12px}
+.pane-heads{display:grid;grid-template-columns:1fr 1fr;border-bottom:2px dashed #ccc3b0}
+.pane-head{padding:12px 16px;font-size:17px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.la{color:#2D6A4F}.lb{color:#7B3F00}
+.split{display:grid;grid-template-columns:1fr 1fr}
+.pane{overflow-y:auto;max-height:460px;padding:12px 16px}
+.pane+.pane{border-left:2px dashed #ccc3b0}
+.sent{display:flex;gap:8px;padding:8px 0;border-bottom:1px dashed #ede8df;align-items:flex-start}
+.sent:last-child{border-bottom:none}
+.badges{display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+.sbadge{font-family:'JetBrains Mono',monospace;font-size:12px;padding:3px 6px;border-radius:3px;text-align:center;min-width:48px;border:1px solid}
+.stext{font-size:19px;line-height:1.85;flex:1}
+.text-block{font-family:Georgia,'Iowan Old Style','Palatino Linotype',serif;font-size:22px;line-height:1.95;letter-spacing:.01em;white-space:pre-wrap}
+.hint{font-size:14px;color:#666;font-family:'JetBrains Mono',monospace;font-style:italic;margin-bottom:8px}
+.callout{font-size:13px;color:#666;font-family:'JetBrains Mono',monospace;background:#fffbe6;border-left:2px solid #e8c840;padding:9px 11px;border-radius:0 3px 3px 0;line-height:1.6}
+.error{font-family:'JetBrains Mono',monospace;font-size:14px;color:#a33;background:#fff1ef;border:1px solid #f0c2bd;padding:12px;border-radius:4px}
+@media (max-width: 900px){
+  .top,.split{grid-template-columns:1fr}
+  .pane+.pane{border-left:none;border-top:2px dashed #ccc3b0}
+  .summary-grid{grid-template-columns:1fr}
+  .composer-grid,.live-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<h1>description precision report</h1>
+<p class="sub">tests.json + results-2026-03-14.md · baseline vs skill output · per-case eval viewer</p>
+
+<div class="toolbar">
+  <div class="picker">
+    <label for="modePicker">mode</label>
+    <select id="modePicker">
+      <option value="static">static</option>
+      <option value="dynamic">dynamic</option>
+    </select>
+  </div>
+  <div class="picker">
+    <label for="casePicker">test case</label>
+    <select id="casePicker"></select>
+  </div>
+  <div class="picker">
+    <label for="viewPicker">report view</label>
+    <select id="viewPicker">
+      <option value="case">selected case</option>
+      <option value="aggregate">aggregate</option>
+    </select>
+  </div>
+  <div class="meta-line" id="metaLine">loading eval artifacts...</div>
+</div>
+
+<div class="box composer" id="composer">
+  <div class="box-title">live generation</div>
+  <div class="composer-grid">
+    <div>
+      <textarea id="promptInput" class="prompt-input" placeholder="enter a prompt to simulate live generation"></textarea>
+      <div class="composer-actions">
+        <button id="generateBtn" type="button">generate live</button>
+        <button id="replayBtn" type="button">replay current run</button>
+      </div>
+    </div>
+    <div class="helper" id="composerHelper">
+      dynamic mode sends your prompt to a live model run, then draws baseline, skill output, and evals as they come back.
+    </div>
+  </div>
+</div>
+
+<div class="box live-panel" id="livePanel">
+  <div class="box-title">generation timeline</div>
+  <div class="live-grid">
+    <div class="live-card"><strong>baseline</strong><span class="phase is-idle" id="phaseBaseline">waiting</span></div>
+    <div class="live-card"><strong>skill output</strong><span class="phase is-idle" id="phaseSkill">waiting</span></div>
+    <div class="live-card"><strong>eval draw</strong><span class="phase is-idle" id="phaseEval">waiting</span></div>
+  </div>
+  <div class="live-line" id="liveMeta">static artifact mode</div>
+</div>
+
+<div class="top">
+  <div class="box">
+    <div class="box-title" id="plotTitle">precision / voice / coherence space</div>
+    <div id="sphere"></div>
+  </div>
+  <div class="box">
+    <div class="box-title">eval summary</div>
+    <div class="narrative" id="narrative"></div>
+    <table class="scores-table" id="scoresTable"></table>
+    <div class="stat-row" id="stats"></div>
+  </div>
+</div>
+
+<div class="box" style="margin-bottom:16px">
+  <div class="box-title">reading notes</div>
+  <div class="summary-grid" id="summaryCards"></div>
+</div>
+
+<div class="split-wrap box">
+  <div class="pane-heads">
+    <div class="pane-head la">A — baseline</div>
+    <div class="pane-head lb">B — skill</div>
+  </div>
+  <div class="split">
+    <div class="pane" id="paneA"></div>
+    <div class="pane" id="paneB"></div>
+  </div>
+</div>
+
+<div class="hint" id="hint">showing sentence-by-sentence output from tests.json</div>
+<div class="callout" id="callout">metrics and narrative are parsed from results-2026-03-14.md</div>
+
+<script>
+const COL_A='#2D6A4F', COL_B='#7B3F00';
+
+const state={
+  testsById:{},
+  cases:[],
+  aggregate:null,
+  selectedId:null,
+  view:'case',
+  mode:'static',
+  performanceSummary:'',
+  live:null
+};
+
+const liveRuntime={
+  abortController:null
+};
+
+function parseMetricValue(value){
+  const clean=value.trim();
+  if(clean==='—'||clean==='N/A'||clean==='')return {label:clean, numeric:null};
+  const pct=clean.match(/^([0-9.]+)%$/);
+  if(pct)return {label:clean, numeric:Number(pct[1])/10};
+  const ten=clean.match(/^([0-9.]+)\/10$/);
+  if(ten)return {label:clean, numeric:Number(ten[1])};
+  const fw=clean.match(/^([0-9.]+)\s*f\/w$/);
+  if(fw)return {label:clean, numeric:Number(fw[1])};
+  const x=clean.match(/^~?([0-9,]+(?:\.[0-9]+)?)x$/i);
+  if(x)return {label:clean, numeric:Number(x[1].replace(/,/g,''))};
+  const intish=clean.match(/^~?([0-9,]+(?:\.[0-9]+)?)$/);
+  if(intish)return {label:clean, numeric:Number(intish[1].replace(/,/g,''))};
+  return {label:clean, numeric:null};
+}
+
+function parseResultsMarkdown(md){
+  const lines=md.split('\n');
+  const sections=[];
+  let current=null;
+
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
+    const sectionHeader=line.match(/^##\s+(.+)$/);
+    if(sectionHeader && sectionHeader[1].trim().toLowerCase()==='performance summary'){
+      if(current)sections.push(current);
+      current=null;
+      continue;
+    }
+    const aggregateMatch=line.match(/^##\s+(aggregate)$/i);
+    if(aggregateMatch){
+      if(current)sections.push(current);
+      current={id:'aggregate', narrative:'', metrics:{}};
+      continue;
+    }
+    const caseMatch=line.match(/^###\s+(.+)$/);
+    if(caseMatch){
+      if(current)sections.push(current);
+      current={id:caseMatch[1].trim(), narrative:'', metrics:{}};
+      continue;
+    }
+    if(!current)continue;
+    if(line.startsWith('| metric |')){
+      i+=2;
+      while(i<lines.length && lines[i].startsWith('|')){
+        const cells=lines[i].split('|').slice(1,-1).map(cell=>cell.trim());
+        if(cells.length>=4){
+          current.metrics[cells[0]]={
+            baseline:parseMetricValue(cells[1]),
+            skill:parseMetricValue(cells[2]),
+            delta:cells[3]
+          };
+        }
+        i++;
+      }
+      i--;
+      continue;
+    }
+    if(line.trim()===''||line.trim()==='---'||/^##\s+/.test(line))continue;
+    if(!current.narrative)current.narrative=line.trim();
+  }
+
+  if(current)sections.push(current);
+  const aggregate=sections.find(section=>section.id==='aggregate')||null;
+  const cases=sections.filter(section=>section.id!=='aggregate'&&section.id!=='performance summary');
+  const perfMatch=md.match(/## performance summary\s+([\s\S]*)$/);
+  const performanceSummary=perfMatch?perfMatch[1].trim():'';
+  return {cases,aggregate,performanceSummary};
+}
+
+function metricLookup(section,name){
+  return section&&section.metrics?section.metrics[name]:null;
+}
+
+function metricLookupNormalized(section,name){
+  if(!section||!section.metrics)return null;
+  return section.metrics[name]
+    || (name==='precision vector' ? section.metrics['precision vector (mean)'] : null);
+}
+
+function toPlotValue(metricCell,key){
+  if(!metricCell)return 0;
+  return metricCell[key]&&metricCell[key].numeric!=null?metricCell[key].numeric:0;
+}
+
+function deltaText(metricCell){
+  return metricCell?metricCell.delta:'';
+}
+
+function fmtMetric(metricCell,key){
+  return metricCell&&metricCell[key]?metricCell[key].label:'—';
+}
+
+function escapeHtml(text){
+  return String(text??'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function abbreviateMiddle(text,maxLen=280,lead=150,tail=90){
+  if(!text)return '';
+  const normalized=text.replace(/\s+/g,' ').trim();
+  if(normalized.length<=maxLen)return normalized;
+  return `${normalized.slice(0,lead).trim()} ... ${normalized.slice(-tail).trim()}`;
+}
+
+function makeSphere(n=20){
+  const x=[],y=[],z=[];
+  for(let i=0;i<=n;i++){
+    const rx=[],ry=[],rz=[];
+    for(let j=0;j<=n;j++){
+      const t=(i/n)*Math.PI/2, p=(j/n)*Math.PI/2;
+      rx.push(Math.sin(t)*Math.cos(p));
+      ry.push(Math.sin(t)*Math.sin(p));
+      rz.push(Math.cos(t));
+    }
+    x.push(rx);y.push(ry);z.push(rz);
+  }
+  return{x,y,z};
+}
+
+const sp=makeSphere();
+const axStyle={titlefont:{family:'JetBrains Mono,monospace',size:11},tickfont:{family:'JetBrains Mono,monospace',size:9},range:[0,10.5],gridcolor:'#e8e0d0',zerolinecolor:'#ddd5c5',backgroundcolor:'rgba(0,0,0,0)'};
+
+function vectorSamples(point){
+  const stops=[0.25,0.5,0.75,1];
+  return {
+    x:stops.map(stop=>point.x*stop),
+    y:stops.map(stop=>point.y*stop),
+    z:stops.map(stop=>point.z*stop)
+  };
+}
+
+function buildPlot(section){
+  const precision=metricLookupNormalized(section,'precision vector');
+  const voice=metricLookupNormalized(section,'voice naturalness');
+  const coherence=metricLookupNormalized(section,'coherence');
+  const baselinePoint={
+    x:toPlotValue(precision,'baseline'),
+    y:toPlotValue(voice,'baseline'),
+    z:toPlotValue(coherence,'baseline')
+  };
+  const skillPoint={
+    x:toPlotValue(precision,'skill'),
+    y:toPlotValue(voice,'skill'),
+    z:toPlotValue(coherence,'skill')
+  };
+  const baselineSamples=vectorSamples(baselinePoint);
+  const skillSamples=vectorSamples(skillPoint);
+  return [
+    {type:'surface',...sp,x:sp.x.map(row=>row.map(v=>v*10)),y:sp.y.map(row=>row.map(v=>v*10)),z:sp.z.map(row=>row.map(v=>v*10)),opacity:0.07,colorscale:[[0,'#cbbfa8'],[1,'#cbbfa8']],showscale:false,hoverinfo:'skip',lighting:{diffuse:0.2}},
+    {type:'scatter3d',x:[0,10.5],y:[0,0],z:[0,0],mode:'lines',line:{color:'#F5A500',width:2,dash:'dot'},hoverinfo:'skip',showlegend:false},
+    {type:'scatter3d',x:[0,0],y:[0,10.5],z:[0,0],mode:'lines',line:{color:'#E84040',width:2,dash:'dot'},hoverinfo:'skip',showlegend:false},
+    {type:'scatter3d',x:[0,0],y:[0,0],z:[0,10.5],mode:'lines',line:{color:'#1A9B8A',width:2,dash:'dot'},hoverinfo:'skip',showlegend:false},
+    {type:'scatter3d',x:[10],y:[10],z:[10],mode:'markers',marker:{size:4,color:'#ccc',symbol:'diamond'},name:'max',hovertemplate:'10/10 on all three axes<extra></extra>'},
+    {
+      type:'scatter3d',
+      x:[0,baselinePoint.x],
+      y:[0,baselinePoint.y],
+      z:[0,baselinePoint.z],
+      mode:'lines',
+      line:{color:COL_A,width:5},
+      name:`A baseline`,
+      hoverinfo:'skip',
+      showlegend:false
+    },
+    {
+      type:'scatter3d',
+      x:[baselinePoint.x],
+      y:[baselinePoint.y],
+      z:[baselinePoint.z],
+      mode:'markers',
+      marker:{size:9,color:COL_A,symbol:'circle',line:{color:'#faf9f5',width:2}},
+      name:`A baseline`,
+      hovertemplate:`baseline<br>precision: ${fmtMetric(precision,'baseline')}<br>voice: ${fmtMetric(voice,'baseline')}<br>coherence: ${fmtMetric(coherence,'baseline')}<extra></extra>`
+    },
+    {
+      type:'scatter3d',
+      x:baselineSamples.x,
+      y:baselineSamples.y,
+      z:baselineSamples.z,
+      mode:'markers',
+      marker:{size:[4,5,6,8],color:COL_A,symbol:'circle',opacity:0.85,line:{color:'#faf9f5',width:1}},
+      name:`A baseline hover targets`,
+      hovertemplate:`baseline<br>precision: ${fmtMetric(precision,'baseline')}<br>voice: ${fmtMetric(voice,'baseline')}<br>coherence: ${fmtMetric(coherence,'baseline')}<extra></extra>`,
+      showlegend:false
+    },
+    {
+      type:'scatter3d',
+      x:[0,skillPoint.x],
+      y:[0,skillPoint.y],
+      z:[0,skillPoint.z],
+      mode:'lines',
+      line:{color:COL_B,width:5},
+      name:`B skill`,
+      hoverinfo:'skip',
+      showlegend:false
+    },
+    {
+      type:'scatter3d',
+      x:[skillPoint.x],
+      y:[skillPoint.y],
+      z:[skillPoint.z],
+      mode:'markers',
+      marker:{size:9,color:COL_B,symbol:'circle',line:{color:'#faf9f5',width:2}},
+      name:`B skill`,
+      hovertemplate:`skill<br>precision: ${fmtMetric(precision,'skill')}<br>voice: ${fmtMetric(voice,'skill')}<br>coherence: ${fmtMetric(coherence,'skill')}<extra></extra>`
+    },
+    {
+      type:'scatter3d',
+      x:skillSamples.x,
+      y:skillSamples.y,
+      z:skillSamples.z,
+      mode:'markers',
+      marker:{size:[4,5,6,8],color:COL_B,symbol:'circle',opacity:0.85,line:{color:'#faf9f5',width:1}},
+      name:`B skill hover targets`,
+      hovertemplate:`skill<br>precision: ${fmtMetric(precision,'skill')}<br>voice: ${fmtMetric(voice,'skill')}<br>coherence: ${fmtMetric(coherence,'skill')}<extra></extra>`,
+      showlegend:false
+    },
+    {
+      type:'scatter3d',
+      x:[skillPoint.x],
+      y:[skillPoint.y],
+      z:[skillPoint.z],
+      mode:'markers',
+      marker:{size:18,color:'rgba(123,63,0,0.01)',symbol:'circle',line:{color:'rgba(123,63,0,0.01)',width:0}},
+      name:`B skill hover pad`,
+      hovertemplate:`skill<br>precision: ${fmtMetric(precision,'skill')}<br>voice: ${fmtMetric(voice,'skill')}<br>coherence: ${fmtMetric(coherence,'skill')}<extra></extra>`,
+      showlegend:false
+    },
+    {
+      type:'scatter3d',
+      x:[baselinePoint.x],
+      y:[baselinePoint.y],
+      z:[baselinePoint.z],
+      mode:'markers',
+      marker:{size:22,color:'rgba(45,106,79,0.01)',symbol:'circle',line:{color:'rgba(45,106,79,0.01)',width:0}},
+      name:`A baseline hover pad`,
+      hovertemplate:`baseline<br>precision: ${fmtMetric(precision,'baseline')}<br>voice: ${fmtMetric(voice,'baseline')}<br>coherence: ${fmtMetric(coherence,'baseline')}<extra></extra>`,
+      showlegend:false
+    }
+  ];
+}
+
+const layout={
+  scene:{
+    xaxis:{...axStyle,title:'Precision'},
+    yaxis:{...axStyle,title:'Voice'},
+    zaxis:{...axStyle,title:'Coherence'},
+    bgcolor:'rgba(0,0,0,0)',
+    camera:{eye:{x:1.4,y:1.4,z:1.0}}
+  },
+  paper_bgcolor:'rgba(0,0,0,0)',
+  margin:{l:0,r:0,t:10,b:0},
+  legend:{font:{family:'JetBrains Mono,monospace',size:10},bgcolor:'rgba(255,253,248,.9)',bordercolor:'#ccc3b0',borderwidth:1,x:0,y:1},
+  height:340,
+  hovermode:'closest'
+};
+
+function renderScores(section,isAggregate){
+  const rows=[
+    {label:'Precision vector', key:'precision vector', color:'#F5A500'},
+    {label:'Voice naturalness', key:'voice naturalness', color:'#E84040'},
+    {label:'Coherence', key:'coherence', color:'#1A9B8A'}
+  ];
+  const table=document.getElementById('scoresTable');
+  const headerLabel=state.mode==='dynamic'?'live run':(isAggregate?'aggregate':'selected case');
+  table.innerHTML=[
+    `<tr><th></th><th>A baseline</th><th>B skill</th><th>Δ</th></tr>`,
+    ...rows.map(row=>{
+      const metric=metricLookupNormalized(section,row.key);
+      const bVal=fmtMetric(metric,'baseline');
+      const sVal=fmtMetric(metric,'skill');
+      const bNum=toPlotValue(metric,'baseline');
+      const sNum=toPlotValue(metric,'skill');
+      return `<tr>
+        <td style="color:${row.color};font-family:'JetBrains Mono',monospace;font-size:11px">${row.label}</td>
+        <td><span class="score-val">${bVal}</span><span class="score-bar-wrap"><span class="score-bar" style="width:${Math.max(0,Math.min(100,bNum*10))}%;background:${COL_A}"></span></span></td>
+        <td><span class="score-val">${sVal}</span><span class="score-bar-wrap"><span class="score-bar" style="width:${Math.max(0,Math.min(100,sNum*10))}%;background:${COL_B}"></span></span></td>
+        <td><span class="delta">${deltaText(metric)}</span></td>
+      </tr>`;
+    })
+  ].join('');
+  document.getElementById('plotTitle').textContent=`precision / voice / coherence space · ${headerLabel}`;
+}
+
+function renderStats(section,isAggregate){
+  const statDefs=isAggregate?[
+    ['referent reduction (geo. mean)','referent reduction (geo. mean)'],
+    ['sentence self-check','sentence self-check'],
+    ['information density','information density'],
+    ['audience adaptation','audience adaptation']
+  ]:[
+    ['referent set size','referent set size'],
+    ['self-check','self-check'],
+    ['info density','info density'],
+    ['voice-to-purpose fit','voice-to-purpose fit']
+  ];
+  document.getElementById('stats').innerHTML=statDefs.map(([title,key])=>{
+    const metric=metricLookupNormalized(section,key);
+    if(!metric)return '';
+    return `<div class="stat"><strong>${fmtMetric(metric,'skill')}</strong>${title} <span class="delta">${metric.delta}</span></div>`;
+  }).join('');
+}
+
+function renderSummaryCards(section,isAggregate){
+  const cards=[];
+  if(section&&section.narrative){
+    cards.push(`<div class="summary-card"><strong>summary</strong>${section.narrative}</div>`);
+  }
+  if(isAggregate&&state.aggregate){
+    const extra=[
+      ['vagueness detection','vagueness detection'],
+      ['discriminability (person)','discriminability (person)'],
+      ['cross-lingual calibration','cross-lingual calibration']
+    ];
+    extra.forEach(([title,key])=>{
+      const metric=metricLookup(state.aggregate,key);
+      if(metric){
+        cards.push(`<div class="summary-card"><strong>${title}</strong>baseline ${fmtMetric(metric,'baseline')} · skill ${fmtMetric(metric,'skill')} · ${metric.delta}</div>`);
+      }
+    });
+    if(state.performanceSummary){
+      const firstParagraph=state.performanceSummary.split(/\n\s*\n/)[0].replace(/\*\*/g,'');
+      cards.push(`<div class="summary-card"><strong>performance summary</strong>${firstParagraph}</div>`);
+    }
+  } else {
+    const tc=state.testsById[state.selectedId];
+    const promptText=state.mode==='dynamic' && state.live ? state.live.prompt : (tc?tc.input_text:'');
+    if(promptText){
+      cards.push(`<div class="summary-card"><strong>prompt</strong>${abbreviateMiddle(promptText)}</div>`);
+      const context=state.mode==='dynamic' && state.live ? state.live.context : {purpose:tc&&tc.purpose,audience:tc&&tc.audience};
+      if(context && (context.audience||context.purpose)){
+        cards.push(`<div class="summary-card"><strong>context</strong>${context.purpose?`purpose: ${context.purpose}`:''}${context.purpose&&context.audience?' · ':''}${context.audience?`audience: ${context.audience}`:''}</div>`);
+      }
+      if(state.mode==='dynamic' && state.live){
+        cards.push(`<div class="summary-card"><strong>run</strong>${state.live.runLabel}</div>`);
+      }
+    }
+  }
+  document.getElementById('summaryCards').innerHTML=cards.join('');
+}
+
+function renderTextBlock(text,elId,color,label){
+  document.getElementById(elId).innerHTML=`<div class="sent">
+    <div class="badges">
+      <span class="sbadge" style="background:${color}18;color:${color};border-color:${color}44">${label}</span>
+    </div>
+    <div class="stext text-block">${escapeHtml(text||'')}</div>
+  </div>`;
+}
+
+function renderTextPanes(isAggregate){
+  const paneA=document.getElementById('paneA');
+  const paneB=document.getElementById('paneB');
+  if(state.mode==='dynamic'){
+    const live=state.live;
+    renderTextBlock(live&&live.baselineText?live.baselineText:'', 'paneA', COL_A, 'A');
+    renderTextBlock(live&&live.skillText?live.skillText:'', 'paneB', COL_B, 'B');
+    return;
+  }
+  if(isAggregate){
+    paneA.innerHTML=`<div class="sent"><span class="stext">Aggregate view does not have a single baseline text. Pick a test case to inspect the actual outputs.</span></div>`;
+    paneB.innerHTML=`<div class="sent"><span class="stext">${state.performanceSummary?state.performanceSummary.replace(/\n+/g,' '):'No aggregate performance summary found.'}</span></div>`;
+    return;
+  }
+  const tc=state.testsById[state.selectedId];
+  renderTextBlock(tc.baseline_output||'', 'paneA', COL_A, 'A');
+  renderTextBlock(tc.skill_output||'', 'paneB', COL_B, 'B');
+}
+
+function render(){
+  const isDynamic=state.mode==='dynamic';
+  const isAggregate=!isDynamic&&state.view==='aggregate';
+  const section=isDynamic?state.live&&state.live.section:(isAggregate?state.aggregate:state.cases.find(c=>c.id===state.selectedId));
+  if(!section)return;
+
+  document.getElementById('narrative').textContent=section.narrative||'';
+  renderScores(section,isAggregate);
+  renderStats(section,isAggregate);
+  renderSummaryCards(section,isAggregate);
+  renderTextPanes(isAggregate);
+  Plotly.react('sphere', buildPlot(section), layout, {responsive:true,displayModeBar:false});
+  document.getElementById('hint').textContent=isDynamic
+    ? 'dynamic mode is generating new content and drawing evals live'
+    : isAggregate
+    ? 'aggregate view summarizes the full suite instead of a single example'
+    : 'showing full baseline and skill outputs from tests.json';
+  document.getElementById('callout').textContent=isDynamic
+    ? `dynamic mode is using /api/live-generate for this run`
+    : isAggregate
+    ? 'aggregate metrics come from the aggregate table and performance summary in results-2026-03-14.md'
+    : `metrics and narrative are parsed from results-2026-03-14.md for ${state.selectedId}`;
+}
+
+function populatePickers(){
+  const picker=document.getElementById('casePicker');
+  picker.innerHTML=state.cases.map(section=>`<option value="${section.id}">${section.id}</option>`).join('');
+  picker.value=state.selectedId;
+}
+
+function validateArtifacts(parsed){
+  const missing=parsed.cases.filter(section=>!state.testsById[section.id]).map(section=>section.id);
+  if(missing.length){
+    throw new Error(`results markdown references cases missing from tests.json: ${missing.join(', ')}`);
+  }
+}
+
+function blankMetric(){
+  return {baseline:{label:'…',numeric:0},skill:{label:'…',numeric:0},delta:''};
+}
+
+function makeBlankDynamicSection(){
+  return {
+    id:'live',
+    narrative:'eval pending...',
+    metrics:{
+      'precision vector':blankMetric(),
+      'voice naturalness':blankMetric(),
+      'coherence':blankMetric(),
+      'referent set size':blankMetric(),
+      'self-check':blankMetric(),
+      'info density':blankMetric(),
+      'voice-to-purpose fit':blankMetric()
+    }
+  };
+}
+
+function setPhase(id,status,label){
+  const el=document.getElementById(id);
+  el.className=`phase is-${status}`;
+  el.textContent=label;
+}
+
+function cancelLiveRun(){
+  if(liveRuntime.abortController){
+    liveRuntime.abortController.abort();
+    liveRuntime.abortController=null;
+  }
+}
+
+function syncToolbarForMode(){
+  const isDynamic=state.mode==='dynamic';
+  document.getElementById('composer').classList.toggle('is-visible', isDynamic);
+  document.getElementById('livePanel').classList.toggle('is-visible', isDynamic);
+  document.getElementById('casePicker').disabled=isDynamic;
+  document.getElementById('viewPicker').disabled=isDynamic;
+  if(isDynamic){
+    document.getElementById('viewPicker').value='case';
+  }
+}
+
+function updateLivePanel(){
+  const live=state.live;
+  if(state.mode!=='dynamic' || !live){
+    document.getElementById('liveMeta').textContent='static artifact mode';
+    setPhase('phaseBaseline','idle','waiting');
+    setPhase('phaseSkill','idle','waiting');
+    setPhase('phaseEval','idle','waiting');
+    return;
+  }
+  document.getElementById('liveMeta').textContent=live.statusMessage||'waiting for live generation';
+}
+
+function resetDynamicState(prompt){
+  state.live={
+    prompt,
+    runLabel:`live run · ${new Date().toLocaleTimeString()}`,
+    context:{purpose:'',audience:'',subject_type:''},
+    statusMessage:'connecting to live generator...',
+    section:makeBlankDynamicSection(),
+    baselineText:'',
+    skillText:''
+  };
+  document.getElementById('promptInput').value=prompt;
+  document.getElementById('composerHelper').textContent='live model run in progress';
+  updateLivePanel();
+  render();
+}
+
+function applyMetricEvent(event){
+  state.live.section.metrics[event.name]={
+    baseline:event.baseline,
+    skill:event.skill,
+    delta:event.delta
+  };
+}
+
+function applyPhaseEvent(event){
+  const lookup={
+    baseline:'phaseBaseline',
+    skill:'phaseSkill',
+    eval:'phaseEval'
+  };
+  const elId=lookup[event.phase];
+  if(elId){
+    setPhase(elId,event.status,event.label);
+  }
+}
+
+function handleLiveEvent(event){
+  if(!state.live)return;
+  if(event.type==='status'){
+    state.live.statusMessage=event.message;
+    document.getElementById('metaLine').textContent=event.message;
+    updateLivePanel();
+    return;
+  }
+  if(event.type==='context'){
+    state.live.context=event.context||state.live.context;
+    document.getElementById('composerHelper').textContent=`subject: ${state.live.context.subject_type||'n/a'} · purpose: ${state.live.context.purpose||'n/a'} · audience: ${state.live.context.audience||'n/a'}`;
+    renderSummaryCards(state.live.section,false);
+    return;
+  }
+  if(event.type==='phase'){
+    applyPhaseEvent(event);
+    return;
+  }
+  if(event.type==='baseline_delta'){
+    state.live.baselineText+=event.text||'';
+    renderTextPanes(false);
+    return;
+  }
+  if(event.type==='skill_delta'){
+    state.live.skillText+=event.text||'';
+    renderTextPanes(false);
+    return;
+  }
+  if(event.type==='metric'){
+    applyMetricEvent(event);
+    render();
+    return;
+  }
+  if(event.type==='narrative'){
+    state.live.section.narrative=event.text||'';
+    render();
+    return;
+  }
+  if(event.type==='error'){
+    throw new Error(event.message||'live generation failed');
+  }
+}
+
+async function runDynamicGeneration(prompt){
+  cancelLiveRun();
+  resetDynamicState(prompt);
+  document.getElementById('metaLine').textContent='starting live generation';
+  const controller=new AbortController();
+  liveRuntime.abortController=controller;
+
+  const response=await fetch('/api/live-generate',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({prompt}),
+    signal:controller.signal
+  });
+  if(!response.ok || !response.body){
+    throw new Error(`live generation failed (${response.status})`);
+  }
+
+  const reader=response.body.getReader();
+  const decoder=new TextDecoder();
+  let buffer='';
+
+  while(true){
+    const {value,done}=await reader.read();
+    if(done)break;
+    buffer+=decoder.decode(value,{stream:true});
+    const lines=buffer.split('\n');
+    buffer=lines.pop()||'';
+    for(const line of lines){
+      if(!line.trim())continue;
+      handleLiveEvent(JSON.parse(line));
+    }
+  }
+
+  if(buffer.trim()){
+    handleLiveEvent(JSON.parse(buffer));
+  }
+  liveRuntime.abortController=null;
+}
+
+async function loadArtifacts(){
+  const [testsResp,resultsResp]=await Promise.all([
+    fetch('./tests.json'),
+    fetch('./results-2026-03-14.md')
+  ]);
+  if(!testsResp.ok)throw new Error(`failed to load tests.json (${testsResp.status})`);
+  if(!resultsResp.ok)throw new Error(`failed to load results-2026-03-14.md (${resultsResp.status})`);
+
+  const testsJson=await testsResp.json();
+  const tests=testsJson.test_cases||testsJson;
+  state.testsById=Object.fromEntries(tests.map(tc=>[tc.id,tc]));
+
+  const parsed=parseResultsMarkdown(await resultsResp.text());
+  validateArtifacts(parsed);
+  state.cases=parsed.cases;
+  state.aggregate=parsed.aggregate;
+  state.performanceSummary=parsed.performanceSummary;
+  state.selectedId=parsed.cases[0]&&parsed.cases[0].id;
+
+  populatePickers();
+  document.getElementById('promptInput').value=state.testsById[state.selectedId].input_text;
+  document.getElementById('metaLine').textContent=`loaded ${parsed.cases.length} cases from results-2026-03-14.md`;
+  syncToolbarForMode();
+  updateLivePanel();
+  render();
+}
+
+document.getElementById('casePicker').addEventListener('change',e=>{
+  state.selectedId=e.target.value;
+  document.getElementById('promptInput').value=state.testsById[state.selectedId].input_text;
+  if(state.view!=='case'){
+    state.view='case';
+    document.getElementById('viewPicker').value='case';
+  }
+  render();
+});
+
+document.getElementById('viewPicker').addEventListener('change',e=>{
+  state.view=e.target.value;
+  render();
+});
+
+document.getElementById('modePicker').addEventListener('change',e=>{
+  state.mode=e.target.value;
+  cancelLiveRun();
+  syncToolbarForMode();
+  if(state.mode==='dynamic'){
+    const prompt=document.getElementById('promptInput').value.trim() || state.testsById[state.selectedId].input_text;
+    runDynamicGeneration(prompt).catch(error=>{
+      document.getElementById('metaLine').textContent='live generation failed';
+      document.getElementById('callout').textContent=error.message;
+    });
+    return;
+  }
+  state.live=null;
+  document.getElementById('metaLine').textContent=`loaded ${state.cases.length} cases from results-2026-03-14.md`;
+  updateLivePanel();
+  render();
+});
+
+document.getElementById('generateBtn').addEventListener('click',()=>{
+  const prompt=document.getElementById('promptInput').value.trim();
+  if(!prompt)return;
+  runDynamicGeneration(prompt).catch(error=>{
+    document.getElementById('metaLine').textContent='live generation failed';
+    document.getElementById('callout').textContent=error.message;
+  });
+});
+
+document.getElementById('replayBtn').addEventListener('click',()=>{
+  if(state.mode!=='dynamic')return;
+  const prompt=(state.live&&state.live.prompt)||document.getElementById('promptInput').value.trim();
+  if(!prompt)return;
+  runDynamicGeneration(prompt).catch(error=>{
+    document.getElementById('metaLine').textContent='live generation failed';
+    document.getElementById('callout').textContent=error.message;
+  });
+});
+
+loadArtifacts().catch(error=>{
+  document.getElementById('metaLine').textContent='failed to load eval artifacts';
+  document.querySelector('.top').innerHTML=`<div class="error">${error.message}. serve the repo with a local http server before opening proto.html.</div>`;
+  document.getElementById('summaryCards').innerHTML='';
+  document.getElementById('paneA').innerHTML='';
+  document.getElementById('paneB').innerHTML='';
+  document.getElementById('hint').textContent='load failure';
+  document.getElementById('callout').textContent='expected sibling files: tests.json and results-2026-03-14.md';
+});
+
+const pA=document.getElementById('paneA'), pB=document.getElementById('paneB');
+let syncing=false;
+function syncScroll(src,dst){
+  if(syncing)return;
+  syncing=true;
+  const srcRange=src.scrollHeight-src.clientHeight||1;
+  const dstRange=dst.scrollHeight-dst.clientHeight||1;
+  dst.scrollTop=(src.scrollTop/srcRange)*dstRange;
+  syncing=false;
+}
+pA.addEventListener('scroll',()=>syncScroll(pA,pB));
+pB.addEventListener('scroll',()=>syncScroll(pB,pA));
+</script>
+</body>
+</html>

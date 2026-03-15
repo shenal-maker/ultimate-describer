@@ -1,0 +1,89 @@
+{
+  "run_id": "eval_20260314_211158",
+  "model": "claude-sonnet-4-20250514",
+  "timestamp": "2026-03-14T21:11:58.862186+00:00",
+  "repeats": 1,
+  "test_case_count": 10,
+  "metrics": {
+    "referent_reduction": {
+      "scores": [],
+      "aggregate": {
+        "n": 0,
+        "note": "no applicable test cases"
+      },
+      "elapsed_seconds": 92.5
+    },
+    "sentence_selfcheck": {
+      "scores": [],
+      "aggregate": {
+        "n": 0,
+        "note": "no applicable test cases"
+      },
+      "elapsed_seconds": 44.0
+    },
+    "information_density": {
+      "scores": [],
+      "aggregate": {
+        "n": 0,
+        "note": "no applicable test cases"
+      },
+      "elapsed_seconds": 90.3
+    },
+    "discriminability": {
+      "scores": [],
+      "aggregate": {
+        "n": 0,
+        "note": "no applicable test cases"
+      },
+      "elapsed_seconds": 4.4
+    },
+    "precision_vector": {
+      "scores": [],
+      "aggregate": {
+        "n": 0,
+        "note": "no applicable test cases"
+      },
+      "elapsed_seconds": 45.3
+    },
+    "voice_preservation": {
+      "scores": [],
+      "aggregate": {
+        "n": 0,
+        "note": "no applicable test cases"
+      },
+      "elapsed_seconds": 44.2
+    },
+    "coherence": {
+      "scores": [],
+      "aggregate": {
+        "n": 0,
+        "note": "no applicable test cases"
+      },
+      "elapsed_seconds": 44.7
+    },
+    "vagueness_detection": {
+      "scores": [],
+      "aggregate": {
+        "n": 0,
+        "note": "no applicable test cases"
+      },
+      "elapsed_seconds": 31.2
+    },
+    "crossling_validation": {
+      "scores": [],
+      "aggregate": {
+        "n": 0,
+        "note": "no applicable test cases"
+      },
+      "elapsed_seconds": 13.8
+    },
+    "audience_adaptation": {
+      "scores": [],
+      "aggregate": {
+        "n": 0,
+        "note": "no applicable test cases"
+      },
+      "elapsed_seconds": 4.6
+    }
+  }
+}
