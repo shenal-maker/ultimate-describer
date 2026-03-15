@@ -18,6 +18,26 @@ h1{font-size:40px;font-weight:700}
 .picker{display:flex;flex-direction:column;gap:6px}
 .picker label,.meta-line{font-family:'JetBrains Mono',monospace;font-size:13px;color:#8a8377}
 select{font-family:'JetBrains Mono',monospace;font-size:14px;padding:10px 12px;border:2px dashed #ccc3b0;background:#fffdf8;border-radius:4px;min-width:260px}
+textarea,input,button{font-family:'JetBrains Mono',monospace}
+button{font-size:14px;padding:11px 14px;border:2px dashed #bfae93;background:#f7f1e6;border-radius:4px;cursor:pointer;color:#43331f}
+button:hover{background:#f0e7d8}
+.composer{display:none;margin-bottom:16px}
+.composer.is-visible{display:block}
+.composer-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.8fr);gap:12px;align-items:start}
+.prompt-input{width:100%;min-height:132px;padding:12px;border:2px dashed #ccc3b0;background:#fffdf8;border-radius:4px;font-size:14px;line-height:1.6;resize:vertical}
+.composer-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
+.helper{font-family:'JetBrains Mono',monospace;font-size:12px;color:#8a8377;line-height:1.6}
+.live-panel{display:none;margin-bottom:16px}
+.live-panel.is-visible{display:block}
+.live-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.live-card{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#f5efe5;border:1px solid #ddd5c5;border-radius:4px;padding:12px}
+.live-card strong{display:block;font-size:13px;color:#40362b;margin-bottom:4px}
+.phase{display:inline-flex;align-items:center;gap:6px}
+.phase::before{content:'';width:8px;height:8px;border-radius:50%;background:#c8b79c;display:inline-block}
+.phase.is-active::before{background:#d49a1f}
+.phase.is-done::before{background:#2D8A4E}
+.phase.is-idle::before{background:#c8b79c}
+.live-line{font-family:'JetBrains Mono',monospace;font-size:12px;color:#6e6659;margin-top:10px}
 .narrative{font-size:19px;line-height:1.7;margin-bottom:14px}
 .summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
 .summary-card{font-family:'JetBrains Mono',monospace;font-size:13px;padding:10px 12px;background:#f0ebe2;border:1px solid #ddd5c5;border-radius:3px;line-height:1.6}
@@ -52,6 +72,7 @@ select{font-family:'JetBrains Mono',monospace;font-size:14px;padding:10px 12px;b
   .top,.split{grid-template-columns:1fr}
   .pane+.pane{border-left:none;border-top:2px dashed #ccc3b0}
   .summary-grid{grid-template-columns:1fr}
+  .composer-grid,.live-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -61,6 +82,13 @@ select{font-family:'JetBrains Mono',monospace;font-size:14px;padding:10px 12px;b
 <p class="sub">tests.json + results-2026-03-14.md · baseline vs skill output · per-case eval viewer</p>
 
 <div class="toolbar">
+  <div class="picker">
+    <label for="modePicker">mode</label>
+    <select id="modePicker">
+      <option value="static">static</option>
+      <option value="dynamic">dynamic</option>
+    </select>
+  </div>
   <div class="picker">
     <label for="casePicker">test case</label>
     <select id="casePicker"></select>
@@ -73,6 +101,32 @@ select{font-family:'JetBrains Mono',monospace;font-size:14px;padding:10px 12px;b
     </select>
   </div>
   <div class="meta-line" id="metaLine">loading eval artifacts...</div>
+</div>
+
+<div class="box composer" id="composer">
+  <div class="box-title">live generation</div>
+  <div class="composer-grid">
+    <div>
+      <textarea id="promptInput" class="prompt-input" placeholder="enter a prompt to simulate live generation"></textarea>
+      <div class="composer-actions">
+        <button id="generateBtn" type="button">generate live</button>
+        <button id="replayBtn" type="button">replay current run</button>
+      </div>
+    </div>
+    <div class="helper" id="composerHelper">
+      dynamic mode sends your prompt to a live model run, then draws baseline, skill output, and evals as they come back.
+    </div>
+  </div>
+</div>
+
+<div class="box live-panel" id="livePanel">
+  <div class="box-title">generation timeline</div>
+  <div class="live-grid">
+    <div class="live-card"><strong>baseline</strong><span class="phase is-idle" id="phaseBaseline">waiting</span></div>
+    <div class="live-card"><strong>skill output</strong><span class="phase is-idle" id="phaseSkill">waiting</span></div>
+    <div class="live-card"><strong>eval draw</strong><span class="phase is-idle" id="phaseEval">waiting</span></div>
+  </div>
+  <div class="live-line" id="liveMeta">static artifact mode</div>
 </div>
 
 <div class="top">
@@ -115,7 +169,14 @@ const state={
   cases:[],
   aggregate:null,
   selectedId:null,
-  view:'case'
+  view:'case',
+  mode:'static',
+  performanceSummary:'',
+  live:null
+};
+
+const liveRuntime={
+  abortController:null
 };
 
 function parseMetricValue(value){
@@ -209,6 +270,15 @@ function deltaText(metricCell){
 
 function fmtMetric(metricCell,key){
   return metricCell&&metricCell[key]?metricCell[key].label:'—';
+}
+
+function escapeHtml(text){
+  return String(text??'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
 }
 
 function abbreviateMiddle(text,maxLen=280,lead=150,tail=90){
@@ -378,7 +448,7 @@ function renderScores(section,isAggregate){
     {label:'Coherence', key:'coherence', color:'#1A9B8A'}
   ];
   const table=document.getElementById('scoresTable');
-  const headerLabel=isAggregate?'aggregate':'selected case';
+  const headerLabel=state.mode==='dynamic'?'live run':(isAggregate?'aggregate':'selected case');
   table.innerHTML=[
     `<tr><th></th><th>A baseline</th><th>B skill</th><th>Δ</th></tr>`,
     ...rows.map(row=>{
@@ -440,10 +510,15 @@ function renderSummaryCards(section,isAggregate){
     }
   } else {
     const tc=state.testsById[state.selectedId];
-    if(tc){
-      cards.push(`<div class="summary-card"><strong>prompt</strong>${abbreviateMiddle(tc.input_text)}</div>`);
-      if(tc.audience||tc.purpose){
-        cards.push(`<div class="summary-card"><strong>context</strong>${tc.purpose?`purpose: ${tc.purpose}`:''}${tc.purpose&&tc.audience?' · ':''}${tc.audience?`audience: ${tc.audience}`:''}</div>`);
+    const promptText=state.mode==='dynamic' && state.live ? state.live.prompt : (tc?tc.input_text:'');
+    if(promptText){
+      cards.push(`<div class="summary-card"><strong>prompt</strong>${abbreviateMiddle(promptText)}</div>`);
+      const context=state.mode==='dynamic' && state.live ? state.live.context : {purpose:tc&&tc.purpose,audience:tc&&tc.audience};
+      if(context && (context.audience||context.purpose)){
+        cards.push(`<div class="summary-card"><strong>context</strong>${context.purpose?`purpose: ${context.purpose}`:''}${context.purpose&&context.audience?' · ':''}${context.audience?`audience: ${context.audience}`:''}</div>`);
+      }
+      if(state.mode==='dynamic' && state.live){
+        cards.push(`<div class="summary-card"><strong>run</strong>${state.live.runLabel}</div>`);
       }
     }
   }
@@ -455,13 +530,19 @@ function renderTextBlock(text,elId,color,label){
     <div class="badges">
       <span class="sbadge" style="background:${color}18;color:${color};border-color:${color}44">${label}</span>
     </div>
-    <div class="stext text-block">${text||''}</div>
+    <div class="stext text-block">${escapeHtml(text||'')}</div>
   </div>`;
 }
 
 function renderTextPanes(isAggregate){
   const paneA=document.getElementById('paneA');
   const paneB=document.getElementById('paneB');
+  if(state.mode==='dynamic'){
+    const live=state.live;
+    renderTextBlock(live&&live.baselineText?live.baselineText:'', 'paneA', COL_A, 'A');
+    renderTextBlock(live&&live.skillText?live.skillText:'', 'paneB', COL_B, 'B');
+    return;
+  }
   if(isAggregate){
     paneA.innerHTML=`<div class="sent"><span class="stext">Aggregate view does not have a single baseline text. Pick a test case to inspect the actual outputs.</span></div>`;
     paneB.innerHTML=`<div class="sent"><span class="stext">${state.performanceSummary?state.performanceSummary.replace(/\n+/g,' '):'No aggregate performance summary found.'}</span></div>`;
@@ -473,8 +554,9 @@ function renderTextPanes(isAggregate){
 }
 
 function render(){
-  const isAggregate=state.view==='aggregate';
-  const section=isAggregate?state.aggregate:state.cases.find(c=>c.id===state.selectedId);
+  const isDynamic=state.mode==='dynamic';
+  const isAggregate=!isDynamic&&state.view==='aggregate';
+  const section=isDynamic?state.live&&state.live.section:(isAggregate?state.aggregate:state.cases.find(c=>c.id===state.selectedId));
   if(!section)return;
 
   document.getElementById('narrative').textContent=section.narrative||'';
@@ -483,10 +565,14 @@ function render(){
   renderSummaryCards(section,isAggregate);
   renderTextPanes(isAggregate);
   Plotly.react('sphere', buildPlot(section), layout, {responsive:true,displayModeBar:false});
-  document.getElementById('hint').textContent=isAggregate
+  document.getElementById('hint').textContent=isDynamic
+    ? 'dynamic mode is generating new content and drawing evals live'
+    : isAggregate
     ? 'aggregate view summarizes the full suite instead of a single example'
     : 'showing full baseline and skill outputs from tests.json';
-  document.getElementById('callout').textContent=isAggregate
+  document.getElementById('callout').textContent=isDynamic
+    ? `dynamic mode is using /api/live-generate for this run`
+    : isAggregate
     ? 'aggregate metrics come from the aggregate table and performance summary in results-2026-03-14.md'
     : `metrics and narrative are parsed from results-2026-03-14.md for ${state.selectedId}`;
 }
@@ -502,6 +588,180 @@ function validateArtifacts(parsed){
   if(missing.length){
     throw new Error(`results markdown references cases missing from tests.json: ${missing.join(', ')}`);
   }
+}
+
+function blankMetric(){
+  return {baseline:{label:'…',numeric:0},skill:{label:'…',numeric:0},delta:''};
+}
+
+function makeBlankDynamicSection(){
+  return {
+    id:'live',
+    narrative:'eval pending...',
+    metrics:{
+      'precision vector':blankMetric(),
+      'voice naturalness':blankMetric(),
+      'coherence':blankMetric(),
+      'referent set size':blankMetric(),
+      'self-check':blankMetric(),
+      'info density':blankMetric(),
+      'voice-to-purpose fit':blankMetric()
+    }
+  };
+}
+
+function setPhase(id,status,label){
+  const el=document.getElementById(id);
+  el.className=`phase is-${status}`;
+  el.textContent=label;
+}
+
+function cancelLiveRun(){
+  if(liveRuntime.abortController){
+    liveRuntime.abortController.abort();
+    liveRuntime.abortController=null;
+  }
+}
+
+function syncToolbarForMode(){
+  const isDynamic=state.mode==='dynamic';
+  document.getElementById('composer').classList.toggle('is-visible', isDynamic);
+  document.getElementById('livePanel').classList.toggle('is-visible', isDynamic);
+  document.getElementById('casePicker').disabled=isDynamic;
+  document.getElementById('viewPicker').disabled=isDynamic;
+  if(isDynamic){
+    document.getElementById('viewPicker').value='case';
+  }
+}
+
+function updateLivePanel(){
+  const live=state.live;
+  if(state.mode!=='dynamic' || !live){
+    document.getElementById('liveMeta').textContent='static artifact mode';
+    setPhase('phaseBaseline','idle','waiting');
+    setPhase('phaseSkill','idle','waiting');
+    setPhase('phaseEval','idle','waiting');
+    return;
+  }
+  document.getElementById('liveMeta').textContent=live.statusMessage||'waiting for live generation';
+}
+
+function resetDynamicState(prompt){
+  state.live={
+    prompt,
+    runLabel:`live run · ${new Date().toLocaleTimeString()}`,
+    context:{purpose:'',audience:'',subject_type:''},
+    statusMessage:'connecting to live generator...',
+    section:makeBlankDynamicSection(),
+    baselineText:'',
+    skillText:''
+  };
+  document.getElementById('promptInput').value=prompt;
+  document.getElementById('composerHelper').textContent='live model run in progress';
+  updateLivePanel();
+  render();
+}
+
+function applyMetricEvent(event){
+  state.live.section.metrics[event.name]={
+    baseline:event.baseline,
+    skill:event.skill,
+    delta:event.delta
+  };
+}
+
+function applyPhaseEvent(event){
+  const lookup={
+    baseline:'phaseBaseline',
+    skill:'phaseSkill',
+    eval:'phaseEval'
+  };
+  const elId=lookup[event.phase];
+  if(elId){
+    setPhase(elId,event.status,event.label);
+  }
+}
+
+function handleLiveEvent(event){
+  if(!state.live)return;
+  if(event.type==='status'){
+    state.live.statusMessage=event.message;
+    document.getElementById('metaLine').textContent=event.message;
+    updateLivePanel();
+    return;
+  }
+  if(event.type==='context'){
+    state.live.context=event.context||state.live.context;
+    document.getElementById('composerHelper').textContent=`subject: ${state.live.context.subject_type||'n/a'} · purpose: ${state.live.context.purpose||'n/a'} · audience: ${state.live.context.audience||'n/a'}`;
+    renderSummaryCards(state.live.section,false);
+    return;
+  }
+  if(event.type==='phase'){
+    applyPhaseEvent(event);
+    return;
+  }
+  if(event.type==='baseline_delta'){
+    state.live.baselineText+=event.text||'';
+    renderTextPanes(false);
+    return;
+  }
+  if(event.type==='skill_delta'){
+    state.live.skillText+=event.text||'';
+    renderTextPanes(false);
+    return;
+  }
+  if(event.type==='metric'){
+    applyMetricEvent(event);
+    render();
+    return;
+  }
+  if(event.type==='narrative'){
+    state.live.section.narrative=event.text||'';
+    render();
+    return;
+  }
+  if(event.type==='error'){
+    throw new Error(event.message||'live generation failed');
+  }
+}
+
+async function runDynamicGeneration(prompt){
+  cancelLiveRun();
+  resetDynamicState(prompt);
+  document.getElementById('metaLine').textContent='starting live generation';
+  const controller=new AbortController();
+  liveRuntime.abortController=controller;
+
+  const response=await fetch('/api/live-generate',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({prompt}),
+    signal:controller.signal
+  });
+  if(!response.ok || !response.body){
+    throw new Error(`live generation failed (${response.status})`);
+  }
+
+  const reader=response.body.getReader();
+  const decoder=new TextDecoder();
+  let buffer='';
+
+  while(true){
+    const {value,done}=await reader.read();
+    if(done)break;
+    buffer+=decoder.decode(value,{stream:true});
+    const lines=buffer.split('\n');
+    buffer=lines.pop()||'';
+    for(const line of lines){
+      if(!line.trim())continue;
+      handleLiveEvent(JSON.parse(line));
+    }
+  }
+
+  if(buffer.trim()){
+    handleLiveEvent(JSON.parse(buffer));
+  }
+  liveRuntime.abortController=null;
 }
 
 async function loadArtifacts(){
@@ -524,12 +784,16 @@ async function loadArtifacts(){
   state.selectedId=parsed.cases[0]&&parsed.cases[0].id;
 
   populatePickers();
+  document.getElementById('promptInput').value=state.testsById[state.selectedId].input_text;
   document.getElementById('metaLine').textContent=`loaded ${parsed.cases.length} cases from results-2026-03-14.md`;
+  syncToolbarForMode();
+  updateLivePanel();
   render();
 }
 
 document.getElementById('casePicker').addEventListener('change',e=>{
   state.selectedId=e.target.value;
+  document.getElementById('promptInput').value=state.testsById[state.selectedId].input_text;
   if(state.view!=='case'){
     state.view='case';
     document.getElementById('viewPicker').value='case';
@@ -540,6 +804,43 @@ document.getElementById('casePicker').addEventListener('change',e=>{
 document.getElementById('viewPicker').addEventListener('change',e=>{
   state.view=e.target.value;
   render();
+});
+
+document.getElementById('modePicker').addEventListener('change',e=>{
+  state.mode=e.target.value;
+  cancelLiveRun();
+  syncToolbarForMode();
+  if(state.mode==='dynamic'){
+    const prompt=document.getElementById('promptInput').value.trim() || state.testsById[state.selectedId].input_text;
+    runDynamicGeneration(prompt).catch(error=>{
+      document.getElementById('metaLine').textContent='live generation failed';
+      document.getElementById('callout').textContent=error.message;
+    });
+    return;
+  }
+  state.live=null;
+  document.getElementById('metaLine').textContent=`loaded ${state.cases.length} cases from results-2026-03-14.md`;
+  updateLivePanel();
+  render();
+});
+
+document.getElementById('generateBtn').addEventListener('click',()=>{
+  const prompt=document.getElementById('promptInput').value.trim();
+  if(!prompt)return;
+  runDynamicGeneration(prompt).catch(error=>{
+    document.getElementById('metaLine').textContent='live generation failed';
+    document.getElementById('callout').textContent=error.message;
+  });
+});
+
+document.getElementById('replayBtn').addEventListener('click',()=>{
+  if(state.mode!=='dynamic')return;
+  const prompt=(state.live&&state.live.prompt)||document.getElementById('promptInput').value.trim();
+  if(!prompt)return;
+  runDynamicGeneration(prompt).catch(error=>{
+    document.getElementById('metaLine').textContent='live generation failed';
+    document.getElementById('callout').textContent=error.message;
+  });
 });
 
 loadArtifacts().catch(error=>{
