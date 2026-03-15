@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>communication profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background-color:#fff;
+  background-image:linear-gradient(rgba(160,190,160,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(160,190,160,.18) 1px,transparent 1px);
+  background-size:22px 22px;
+  font-family:'Caveat',cursive;
+  color:#1e1e1e;
+  padding:32px 28px;
+  min-height:100vh;
+}
+h1{font-size:36px;font-weight:700;letter-spacing:-.01em;line-height:1}
+.sub{font-size:16px;color:#888;margin-top:4px;margin-bottom:24px;border-bottom:2px dashed #ccc;padding-bottom:12px}
+.layout{display:grid;grid-template-columns:46% 54%;gap:20px;align-items:start}
+.box{border:2px dashed #bbb;border-radius:6px;background:rgba(255,255,255,.85);padding:14px}
+.box-title{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#666;margin-bottom:10px}
+#mapCanvas{width:100%;display:block;cursor:pointer}
+.panel-label{font-size:18px;font-weight:700;margin-bottom:8px}
+.la{color:#2D6A4F}.lb{color:#7B3F00}
+.desc{font-size:16px;line-height:1.9}
+mark{padding:1px 3px;border-radius:3px;cursor:help;font-style:normal}
+.hint{font-size:15px;color:#999;margin-top:18px;font-style:italic}
+.hint::before{content:'→ '}
+.panels{display:flex;flex-direction:column;gap:14px}
+</style>
+</head>
+<body>
+
+<h1>communication profile</h1>
+<p class="sub">comparative analysis · click a row to see which phrases drive that score</p>
+
+<div class="layout">
+  <div class="box">
+    <div class="box-title">profile map</div>
+    <canvas id="mapCanvas"></canvas>
+  </div>
+  <div class="panels">
+    <div class="box">
+      <div class="panel-label la">A — marketing pitch</div>
+      <div class="desc" id="textA"></div>
+    </div>
+    <div class="box">
+      <div class="panel-label lb">B — spec sheet</div>
+      <div class="desc" id="textB"></div>
+    </div>
+  </div>
+</div>
+<p class="hint" id="hint">click a row to highlight phrases</p>
+
+<script>
+// highlighter palette — one color per dimension
+const HL = [
+  '#C8E86A', // yellow-green  — Concreteness
+  '#FF8FA3', // coral         — Framing
+  '#7EC8E3', // sky blue      — Register
+  '#C5A3FF', // lavender      — Confidence
+  '#FFB347', // peach         — Precision
+  '#85E8C0', // mint          — Audience fit
+];
+
+const DIMS = [
+  { name:'Concreteness', left:'Abstract',       right:'Concrete'       },
+  { name:'Framing',      left:'Negative',       right:'Positive'       },
+  { name:'Register',     left:'Intimate',       right:'Formal'         },
+  { name:'Confidence',   left:'Tentative',      right:'Authoritative'  },
+  { name:'Precision',    left:'Under-specified', right:'Over-specified' },
+  { name:'Audience fit', left:'Misaligned',     right:'Calibrated'     },
+];
+
+const A = {
+  text: "Fit-Referals turns hiring and talent discovery into a network-driven growth loop. Instead of static job posts, users create rich descriptions of ideal candidates, share trackable referral links, and watch trusted introductions propagate through real social graphs. Every forward and referral is attributed to a specific branch, giving employers unprecedented visibility into which communities, advocates, and messages actually produce high-quality candidates. With AI-assisted brief creation, viral sharing mechanics, and built-in graph analytics, the product can serve recruiters, founders, communities, and internal talent teams alike. It has the ingredients of a scalable marketplace for trusted human recommendations at internet scale globally today.",
+  scores:[0.22,0.78,0.55,0.82,0.18,0.20],
+  phrases:[
+    [{text:"network-driven growth loop",dir:-1,note:"vague metaphor"},{text:"trackable referral links",dir:1,note:"specific feature"},{text:"internet scale globally today",dir:-1,note:"empty amplifier"}],
+    [{text:"turns hiring and talent discovery",dir:1,note:"positive reframe"},{text:"unprecedented visibility",dir:1,note:"strong positive claim"},{text:"trusted introductions",dir:1,note:"positive framing"}],
+    [{text:"scalable marketplace",dir:1,note:"business register"},{text:"viral sharing mechanics",dir:1,note:"startup register"},{text:"watch trusted introductions propagate",dir:-1,note:"slightly casual"}],
+    [{text:"has the ingredients of",dir:-1,note:"hedged — not a direct claim"},{text:"giving employers unprecedented visibility",dir:1,note:"assertive"}],
+    [{text:"high-quality candidates",dir:-1,note:"undefined"},{text:"specific branch",dir:1,note:"precise referent"},{text:"internet scale globally today",dir:-1,note:"no numbers"}],
+    [{text:"network-driven growth loop",dir:-1,note:"pitch language in a doc request"},{text:"trackable referral links",dir:1,note:"relevant"},{text:"scalable marketplace",dir:-1,note:"wrong context"}],
+  ]
+};
+
+const B = {
+  text: "A precision-augmentation system that transforms vague language into context-optimized, audience-specific descriptions. Core engine: detects ambiguity in input text, generates candidate replacements across a vague-to-precise spectrum, and ranks them along a formal specificity axis. Context calibration: conditions outputs on audience, domain lexicons, cross-language precision, and emotional register. Personalization layer: learns user stylistic preferences through comparative selection, quizzes, and writing analysis. Output interfaces: inline replacement, precision sliders, and multimodal generation (text, image, video, graphs). Evaluation loop: A/B testing, user inspection, and self-improving skill updates.",
+  scores:[0.82,0.05,0.88,0.68,0.78,0.74],
+  phrases:[
+    [{text:"generates candidate replacements",dir:1,note:"concrete action"},{text:"ranks them along a formal specificity axis",dir:1,note:"concrete mechanism"},{text:"precision-augmentation system",dir:-1,note:"abstract compound noun"}],
+    [{text:"transforms vague language",dir:-1,note:"frames current state as negative"},{text:"self-improving skill updates",dir:1,note:"positive capability"}],
+    [{text:"precision-augmentation system",dir:1,note:"formal/technical"},{text:"formal specificity axis",dir:1,note:"academic register"},{text:"A/B testing, user inspection",dir:1,note:"institutional"}],
+    [{text:"detects ambiguity",dir:1,note:"direct claim"},{text:"learns user stylistic preferences",dir:1,note:"assertive"},{text:"context-optimized",dir:-1,note:"vague adjective"}],
+    [{text:"A/B testing, user inspection, and self-improving skill updates",dir:1,note:"specific eval methods"},{text:"audience, domain lexicons, cross-language precision, and emotional register",dir:1,note:"exhaustive list"}],
+    [{text:"vague-to-precise spectrum",dir:1,note:"matches technical audience"},{text:"multimodal generation (text, image, video, graphs)",dir:1,note:"concrete for tech readers"}],
+  ]
+};
+
+const COL_A='#2D6A4F', COL_B='#7B3F00';
+let sel=null;
+
+function draw(s){
+  const cv=document.getElementById('mapCanvas');
+  const dpr=window.devicePixelRatio||1;
+  const W=cv.parentElement.clientWidth-28;
+  const RH=54,PT=10,PB=10,PL=140,PR=100;
+  const H=PT+DIMS.length*RH+PB;
+  cv.width=W*dpr; cv.height=H*dpr;
+  cv.style.width=W+'px'; cv.style.height=H+'px';
+  const ctx=cv.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const tw=W-PL-PR;
+
+  DIMS.forEach((d,i)=>{
+    const y0=PT+i*RH, ym=y0+RH/2;
+    const active=s===i;
+    // row background
+    const hlColor=HL[i];
+    ctx.fillStyle=active ? hlColor+'55' : hlColor+'18';
+    ctx.fillRect(0,y0,W,RH);
+    // track
+    ctx.beginPath(); ctx.moveTo(PL,ym); ctx.lineTo(PL+tw,ym);
+    ctx.strokeStyle=active ? '#aaa' : '#ddd';
+    ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
+    // dim name
+    ctx.textAlign='right';
+    ctx.font=`700 15px Caveat,cursive`;
+    ctx.fillStyle=active?'#111':'#333';
+    ctx.fillText(d.name,PL-10,ym-4);
+    // anchors
+    ctx.font='12px Caveat,cursive'; ctx.fillStyle='#aaa';
+    ctx.fillText(d.left,PL-10,ym+11);
+    ctx.textAlign='left';
+    ctx.fillText(d.right,PL+tw+8,ym+3);
+  });
+
+  // profile lines
+  const drawLine=(data,color)=>{
+    const pts=data.scores.map((sc,i)=>({x:PL+sc*tw,y:PT+i*RH+RH/2}));
+    ctx.beginPath();
+    pts.forEach((p,i)=>{
+      if(i===0){ctx.moveTo(p.x,p.y);return;}
+      const pv=pts[i-1],my=(pv.y+p.y)/2;
+      ctx.bezierCurveTo(pv.x,my,p.x,my,p.x,p.y);
+    });
+    ctx.strokeStyle=color+'cc'; ctx.lineWidth=2.5; ctx.stroke();
+    pts.forEach((p,i)=>{
+      ctx.beginPath(); ctx.arc(p.x,p.y,s===i?9:6,0,Math.PI*2);
+      ctx.fillStyle=s===i?HL[i]:color;
+      ctx.fill();
+      ctx.strokeStyle=color; ctx.lineWidth=2; ctx.stroke();
+    });
+  };
+
+  drawLine(A,COL_A);
+  drawLine(B,COL_B);
+
+  // legend
+  ctx.font='bold 14px Caveat,cursive'; ctx.textAlign='left';
+  ctx.fillStyle=COL_A; ctx.fillText('A',PL+6,PT+14);
+  ctx.fillStyle=COL_B; ctx.fillText('B',PL+22,PT+14);
+}
+
+function applyHighlight(s){
+  const mark=(raw,phrases)=>{
+    if(!phrases)return raw;
+    let r=raw;
+    const found=[];
+    phrases.forEach(p=>{const i=r.indexOf(p.text);if(i>=0)found.push({...p,i});});
+    found.sort((a,b)=>b.i-a.i);
+    found.forEach(p=>{
+      const bg=HL[s]+(p.dir>0?'bb':'66');
+      r=r.slice(0,p.i)+`<mark style="background:${bg};border-radius:3px;padding:1px 3px" title="${p.note}">${p.text}</mark>`+r.slice(p.i+p.text.length);
+    });
+    return r;
+  };
+  document.getElementById('textA').innerHTML=mark(A.text,s!==null?A.phrases[s]:null);
+  document.getElementById('textB').innerHTML=mark(B.text,s!==null?B.phrases[s]:null);
+  const hint=document.getElementById('hint');
+  if(s===null){hint.textContent='click a row to highlight phrases';return;}
+  hint.innerHTML=`<span style="background:${HL[s]}bb;border-radius:3px;padding:1px 5px">${DIMS[s].name}</span> — darker = pushes toward <em>${DIMS[s].right}</em>, lighter = pulls toward <em>${DIMS[s].left}</em>. hover for note.`;
+}
+
+document.getElementById('mapCanvas').addEventListener('click',e=>{
+  const cv=document.getElementById('mapCanvas');
+  const r=cv.getBoundingClientRect();
+  const my=e.clientY-r.top;
+  const i=Math.floor((my-10)/54);
+  if(i>=0&&i<DIMS.length){sel=sel===i?null:i;draw(sel);applyHighlight(sel);}
+});
+
+draw(null); applyHighlight(null);
+window.addEventListener('resize',()=>draw(sel));
+</script>
+</body>
+</html>
