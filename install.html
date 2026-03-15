@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>install articulate</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#faf9f5;background-image:linear-gradient(rgba(120,90,50,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(120,90,50,.08) 1px,transparent 1px);background-size:24px 24px;font-family:'Caveat',cursive;color:#1a1a1a;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;font-size:20px}
+.container{max-width:620px;width:100%}
+h1{font-size:52px;font-weight:700;margin-bottom:4px}
+.tagline{font-family:'JetBrains Mono',monospace;font-size:13px;color:#8a8377;margin-bottom:28px;padding-bottom:12px;border-bottom:2px dashed #ccc3b0}
+.step{display:flex;gap:16px;margin-bottom:20px;align-items:flex-start}
+.step-num{font-size:36px;font-weight:700;color:#7B3F00;min-width:32px;line-height:1;padding-top:2px}
+.step-content{flex:1}
+.step-content h3{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#8a8377;margin-bottom:6px}
+.step-content p{font-size:18px;color:#5a5347;line-height:1.5;margin-bottom:6px}
+code{font-family:'JetBrains Mono',monospace;background:#f0ebe2;border:1px solid #ddd5c5;padding:2px 6px;border-radius:3px;font-size:13px}
+.code-block{font-family:'JetBrains Mono',monospace;background:rgba(255,253,248,.92);border:2px dashed #ccc3b0;padding:12px 16px;border-radius:5px;margin-top:8px;font-size:13px;line-height:1.9;color:#1a1a1a;overflow-x:auto}
+.code-block .comment{color:#8a8377}
+.footer{margin-top:28px;padding-top:14px;border-top:2px dashed #ccc3b0;font-family:'JetBrains Mono',monospace;font-size:12px;color:#8a8377}
+.footer a{color:#7B3F00;text-decoration:none}
+.footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Articulate</h1>
+  <div class="tagline">the skill that makes every other skill better</div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <h3>Install Claude Code</h3>
+      <p>if you haven't already:</p>
+      <div class="code-block">npm install -g @anthropic-ai/claude-code</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <h3>Clone the repo</h3>
+      <div class="code-block">git clone https://github.com/shenal-maker/ultimate-describer.git<br>cd ultimate-describer<br>git checkout skills</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <h3>Copy skills to your project</h3>
+      <p>copy the <code>.claude/skills/</code> directory into your own project:</p>
+      <div class="code-block"><span class="comment"># from inside ultimate-describer/</span><br>cp -r .claude/skills/articulate /path/to/your/project/.claude/skills/</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <h3>Activate</h3>
+      <p>open Claude Code in your project and run:</p>
+      <div class="code-block">/articulate on</div>
+      <p>it'll quiz you on your preferences, then everything you write gets sharper.</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="https://github.com/shenal-maker/ultimate-describer">github.com/shenal-maker/ultimate-describer</a><br><br>
+    built at the Anthropic Skills Hackathon &middot; March 2026
+  </div>
+</div>
+</body>
+</html>

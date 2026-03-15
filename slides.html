@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Articulate</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#faf9f5;background-image:linear-gradient(rgba(120,90,50,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(120,90,50,.08) 1px,transparent 1px);background-size:24px 24px;font-family:'Caveat',cursive;color:#1a1a1a;min-height:100vh;overflow:hidden}
+.slide{display:none;width:100vw;height:100vh;padding:48px 64px;flex-direction:column;justify-content:center}
+.slide.active{display:flex}
+.mono{font-family:'JetBrains Mono',monospace}
+h1{font-size:72px;font-weight:700;line-height:1.1}
+h2{font-size:44px;font-weight:700;line-height:1.2;margin-bottom:16px}
+.sub{font-size:14px;color:#8a8377;font-family:'JetBrains Mono',monospace}
+.brown{color:#7B3F00}
+.green{color:#2D6A4F}
+.red{color:#c0392b}
+.dim{color:#8a8377}
+.box{border:2px dashed #ccc3b0;border-radius:5px;background:rgba(255,253,248,.92);padding:20px 24px}
+.box-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#bbb;margin-bottom:10px}
+.bad-text{font-size:20px;line-height:1.7;color:#1a1a1a;font-family:Georgia,serif;background:#fff1ef;border-left:4px solid #c0392b;padding:16px 20px;border-radius:0 5px 5px 0}
+.good-text{font-size:20px;line-height:1.7;color:#1a1a1a;font-family:Georgia,serif;background:#edf7f0;border-left:4px solid #2D6A4F;padding:16px 20px;border-radius:0 5px 5px 0}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 8px;border-radius:3px;border:1px solid;margin-bottom:8px}
+.tag-red{color:#c0392b;border-color:#e6b3ad;background:#fff5f3}
+.tag-green{color:#2D6A4F;border-color:#a3d4b5;background:#edf7f0}
+.use-case{display:flex;gap:16px;align-items:flex-start;margin-bottom:14px}
+.use-case-icon{font-size:28px;min-width:36px;text-align:center}
+.use-case-text h3{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#7B3F00;margin-bottom:2px}
+.use-case-text p{font-size:18px;color:#5a5347;line-height:1.4}
+.qr-box{width:200px;height:200px;border:2px dashed #ccc3b0;border-radius:5px;display:flex;align-items:center;justify-content:center;background:white}
+.qr-box img{width:100%;height:100%;object-fit:contain;border-radius:3px}
+.nav{position:fixed;bottom:20px;right:28px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#bbb}
+.counter{position:fixed;bottom:20px;left:28px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#bbb}
+.arrow{font-size:32px;color:#7B3F00;text-align:center;margin:12px 0}
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" id="s1">
+  <h1>Articulate</h1>
+  <p class="sub" style="margin-top:8px">the skill that makes every other skill better</p>
+  <p class="sub" style="margin-top:32px;color:#bbb">Anthropic Skills Hackathon &middot; March 2026</p>
+</div>
+
+<!-- SLIDE 2: THE PROBLEM — big fluffy text -->
+<div class="slide" id="s2">
+  <p class="sub" style="margin-bottom:16px">prompt: "describe the benefits of meditation in 50 words"</p>
+  <div class="bad-text" style="font-size:22px;line-height:1.8">
+    Daily meditation improves focus, emotional regulation, stress reduction, and overall mental clarity. Meditation trains attention and helps people observe thoughts without reacting impulsively. Regular practice lowers stress by calming the nervous system and reducing cortisol levels. Over time, it improves concentration, mood stability, sleep quality, and self-awareness, supporting long-term psychological well-being and healthier responses to everyday challenges.
+  </div>
+  <p style="margin-top:20px;font-size:28px;color:#8a8377">you've seen this text. we've all seen this text.</p>
+  <p style="font-size:24px;color:#c0392b;margin-top:4px">it says everything and nothing.</p>
+</div>
+
+<!-- SLIDE 3: THE FIX -->
+<div class="slide" id="s3">
+  <p class="sub" style="margin-bottom:16px">same prompt, with <span class="brown">articulate</span></p>
+  <div class="good-text" style="font-size:22px;line-height:1.8">
+    Meditation trains a specific capacity: the gap between stimulus and response. You notice the impulse to react — anger, distraction, craving — and don't. Physiologically, this shows up as reduced baseline cortisol and improved vagal tone. The effect is invisible day-to-day but legible over months: fewer reactive decisions, more deliberate ones.
+  </div>
+  <p style="margin-top:20px;font-size:24px;color:#2D6A4F">same length. actually says something.</p>
+</div>
+
+<!-- SLIDE 4: MORE EXAMPLES — split layout -->
+<div class="slide" id="s4">
+  <h2>before &amp; after</h2>
+  <div class="split">
+    <div>
+      <span class="tag tag-red">hiring email</span>
+      <div class="bad-text" style="font-size:16px">Hi! I was really impressed by your experience in ML — we're building exciting things and I think you'd be a great fit for our team!</div>
+      <div class="arrow">&darr;</div>
+      <span class="tag tag-green">with articulate</span>
+      <div class="good-text" style="font-size:16px">We're building real-time fraud detection at 2M tx/sec — bottleneck is inference latency. Looking for someone who's shipped low-latency serving infra, not just trained models.</div>
+      <p class="mono dim" style="font-size:11px;margin-top:6px">~50,000 roles &rarr; ~200</p>
+    </div>
+    <div>
+      <span class="tag tag-red">founder bio</span>
+      <div class="bad-text" style="font-size:16px">Passionate founder building innovative solutions at the intersection of AI and healthcare.</div>
+      <div class="arrow">&darr;</div>
+      <span class="tag tag-green">with articulate</span>
+      <div class="good-text" style="font-size:16px">Building Lumen — automated clinical trial matching, 8 months &rarr; 6 weeks. Previously ML lead at Recursion. SF, hiring infra.</div>
+      <p class="mono dim" style="font-size:11px;margin-top:6px">~10,000 bios &rarr; 1</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: PEOPLE EXAMPLES — split layout -->
+<div class="slide" id="s5">
+  <h2>it works on people too</h2>
+  <div class="split">
+    <div>
+      <span class="tag tag-red">LinkedIn profile</span>
+      <div class="bad-text" style="font-size:15px">Adele Shen appears highly driven, intellectually curious, and entrepreneurial, with a strong bias toward building solutions rather than theorizing.</div>
+      <div class="arrow">&darr;</div>
+      <span class="tag tag-green">with articulate</span>
+      <div class="good-text" style="font-size:15px">Adele treats problems as prototyping assignments — she moves from noticing a broken workflow (3,318 unread emails in title insurance) to shipping a fix. TEDx twice before building the company, not after.</div>
+    </div>
+    <div>
+      <span class="tag tag-red">LinkedIn profile</span>
+      <div class="bad-text" style="font-size:15px">Curious, intellectually ambitious, builder-oriented, and socially open. This person appears highly curiosity-driven and multidisciplinary.</div>
+      <div class="arrow">&darr;</div>
+      <span class="tag tag-green">with articulate</span>
+      <div class="good-text" style="font-size:15px">Harrison is a high schooler who treats learning as an engineering problem — he stacks domains (ML, neuroscience, math modeling) and builds at each intersection rather than studying them separately.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: USE CASES -->
+<div class="slide" id="s6">
+  <h2>where this matters</h2>
+  <div style="max-width:700px;margin-top:8px">
+    <div class="use-case">
+      <div class="use-case-icon">&#9993;</div>
+      <div class="use-case-text"><h3>recruiting</h3><p>stop sending emails that could be about any job at any company</p></div>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">&#128196;</div>
+      <div class="use-case-text"><h3>investor pitches</h3><p>"innovative AI solution" describes 10,000 startups. say what yours actually does.</p></div>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">&#128187;</div>
+      <div class="use-case-text"><h3>technical docs</h3><p>"the system processes data efficiently" — which system? what data? how fast?</p></div>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">&#127912;</div>
+      <div class="use-case-text"><h3>image generation</h3><p>vague prompt = generic image. precise prompt = the image you actually wanted.</p></div>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">&#128101;</div>
+      <div class="use-case-text"><h3>1B+ L2 English speakers</h3><p>precision is harder in your second language. this closes the gap.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: HOW + SELF-IMPROVING -->
+<div class="slide" id="s7">
+  <div class="split">
+    <div>
+      <h2>how it works</h2>
+      <div class="box" style="font-family:'JetBrains Mono',monospace;font-size:13px;line-height:2.2">
+        <span class="dim">1.</span> profile check &rarr;
+        <span class="dim">2.</span> mode detection &rarr;
+        <span class="dim">3.</span> voice fingerprint &rarr;
+        <span class="dim">4.</span> context calibration &rarr;
+        <span class="dim">5.</span> precision engine &rarr;
+        <span class="dim">6.</span> cross-lingual enrichment &rarr;
+        <span class="dim">7.</span> output assembly
+      </div>
+      <div style="display:flex;gap:12px;margin-top:12px">
+        <div class="box" style="flex:1">
+          <div class="box-label">always-on</div>
+          <p class="mono" style="font-size:12px"><span class="brown">/articulate on</span><br>invisible precision</p>
+        </div>
+        <div class="box" style="flex:1">
+          <div class="box-label">one-shot</div>
+          <p class="mono" style="font-size:12px"><span class="brown">/articulate [text]</span><br>full report</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h2>it improves itself</h2>
+      <div class="box" style="margin-bottom:12px">
+        <div class="box-label">v1 &rarr; v2 via /eval</div>
+        <p class="mono" style="font-size:13px;line-height:1.8">
+          voice preservation: <span class="red">4</span> &rarr; <span class="green">8</span>/10<br>
+          self-check pass: <span class="red">25%</span> &rarr; <span class="green">87%</span><br>
+          referent reduction: <span class="green">10,000x</span>
+        </p>
+      </div>
+      <div class="box">
+        <div class="box-label">three tracks, one project</div>
+        <p class="mono" style="font-size:13px;line-height:1.8">
+          <span class="green">&#10003;</span> novel reusable skill<br>
+          <span class="green">&#10003;</span> 15-metric eval suite<br>
+          <span class="green">&#10003;</span> self-improving via eval
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: TRY IT -->
+<div class="slide" id="s8">
+  <div style="display:flex;align-items:center;gap:48px">
+    <div>
+      <h1 style="margin-bottom:12px">try it</h1>
+      <div class="mono" style="font-size:14px;line-height:2.2;color:#5a5347">
+        1. npm install -g @anthropic-ai/claude-code<br>
+        2. git clone github.com/shenal-maker/ultimate-describer<br>
+        3. cp -r .claude/skills/articulate your-project/.claude/skills/<br>
+        4. /articulate on
+      </div>
+      <p class="sub" style="margin-top:20px"><a href="https://ultimate-describer.vercel.app/install.html" style="color:#7B3F00;text-decoration:none">ultimate-describer.vercel.app/install.html</a></p>
+    </div>
+    <div class="qr-box" style="flex-shrink:0">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://ultimate-describer.vercel.app/install.html&bgcolor=ffffff&color=1a1a1a" alt="QR code">
+    </div>
+  </div>
+</div>
+
+<div class="counter" id="counter">1 / 8</div>
+<div class="nav">&larr; &rarr; to navigate</div>
+
+<script>
+const slides=document.querySelectorAll('.slide');
+let cur=0;
+function show(n){
+  slides[cur].classList.remove('active');
+  cur=((n%slides.length)+slides.length)%slides.length;
+  slides[cur].classList.add('active');
+  document.getElementById('counter').textContent=(cur+1)+' / '+slides.length;
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ')show(cur+1);
+  if(e.key==='ArrowLeft')show(cur-1);
+});
+</script>
+</body>
+</html>
