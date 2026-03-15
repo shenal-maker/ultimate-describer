@@ -1,7 +1,7 @@
 """
-language precision eval — measures how well the precision system works.
+language precision eval - measures how well the precision system works.
 
-10 metrics, one judge function, one file.
+15 metrics, one judge function, one file.
 
 setup:
     pip install anthropic
@@ -13,20 +13,26 @@ usage:
     python eval.py --test-cases tests.json --repeats 3
 """
 
-import anthropic
-import json
 import argparse
-import time
-import statistics
-import re
 from datetime import datetime, timezone
+import json
+import os
+import random
+import re
+import statistics
+import time
+
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
 
 MODEL = "claude-sonnet-4-20250514"
 
 JUDGE_SYSTEM = (
     "you are an evaluator for a language precision system. "
     "you assess text quality along specific dimensions. "
-    "respond ONLY in the JSON format specified. "
+    "respond only in the json format specified. "
     "be calibrated: use the full range of your scales. "
     "a score of 5/10 means genuinely mediocre, not 'pretty good.' "
     "do not be generous. do not be cruel. be accurate."
@@ -43,33 +49,54 @@ ALL_METRICS = [
     "vagueness_detection",
     "crossling_validation",
     "audience_adaptation",
+    "vocabulary_match",
+    "precision_calibration",
+    "constraint_compliance",
+    "evidence_calibration",
+    "compression_fit",
 ]
 
-client = anthropic.Anthropic()
+client = None
+
+
+def get_client():
+    global client
+    if client is None:
+        if anthropic is None:
+            raise RuntimeError("anthropic package is required to run judge-backed metrics")
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise RuntimeError("ANTHROPIC_API_KEY is required to run judge-backed metrics")
+        client = anthropic.Anthropic(api_key=api_key)
+    return client
 
 
 def judge(prompt, retries=2):
-    """single point of contact with the API. returns parsed JSON dict."""
+    """single point of contact with the api. returns parsed json dict."""
+    text = ""
     for attempt in range(retries + 1):
         try:
-            resp = client.messages.create(
+            resp = get_client().messages.create(
                 model=MODEL,
                 max_tokens=1024,
                 system=JUDGE_SYSTEM,
                 messages=[{"role": "user", "content": prompt}],
             )
             text = resp.content[0].text.strip()
-            # extract JSON from response (may be wrapped in markdown)
             match = re.search(r"\{.*\}", text, re.DOTALL)
             if match:
                 return json.loads(match.group())
             return json.loads(text)
+        except RuntimeError as e:
+            return {"error": str(e)}
         except (json.JSONDecodeError, IndexError):
             if attempt < retries:
                 time.sleep(1)
                 continue
             return {"error": f"failed to parse judge response: {text[:200]}"}
-        except anthropic.APIError as e:
+        except Exception as e:
+            if anthropic is None or not isinstance(e, anthropic.APIError):
+                raise
             if attempt < retries:
                 time.sleep(2)
                 continue
@@ -90,6 +117,39 @@ def split_sentences(text):
     return [s.strip() for s in re.split(r"[.!?]+", text) if s.strip()]
 
 
+def format_audience_profile(tc):
+    profile = tc.get("audience_profile")
+    if not profile:
+        return "not provided"
+    return (
+        f"domain_fluency={profile.get('domain_fluency')}, "
+        f"attention_budget={profile.get('attention_budget')}, "
+        f"epistemic_stance={profile.get('epistemic_stance')}, "
+        f"action_orientation={profile.get('action_orientation')}"
+    )
+
+
+def format_constraints(tc):
+    payload = {
+        "domain_profile": tc.get("domain_profile"),
+        "required_terms": tc.get("required_terms", []),
+        "forbidden_terms": tc.get("forbidden_terms", []),
+        "precision_ceiling": tc.get("precision_ceiling"),
+    }
+    return json.dumps(payload, ensure_ascii=True)
+
+
+def has_constraint_metadata(tc):
+    return any(
+        [
+            tc.get("domain_profile"),
+            tc.get("required_terms"),
+            tc.get("forbidden_terms"),
+            tc.get("precision_ceiling"),
+        ]
+    )
+
+
 # --- metrics ---
 
 
@@ -104,14 +164,14 @@ def eval_referent_reduction(cases, repeats=1):
         results = []
         for _ in range(repeats):
             b = judge(
-                f'how many distinct {subject}s could this description apply to? '
-                f'give your best order-of-magnitude estimate as an integer.\n\n'
+                f"how many distinct {subject}s could this description apply to? "
+                f"give your best order-of-magnitude estimate as an integer.\n\n"
                 f'description: "{baseline}"\n\n'
                 f'respond as: {{"referent_count": <integer>, "reasoning": "<1 sentence>"}}'
             )
             s = judge(
-                f'how many distinct {subject}s could this description apply to? '
-                f'give your best order-of-magnitude estimate as an integer.\n\n'
+                f"how many distinct {subject}s could this description apply to? "
+                f"give your best order-of-magnitude estimate as an integer.\n\n"
                 f'description: "{skill}"\n\n'
                 f'respond as: {{"referent_count": <integer>, "reasoning": "<1 sentence>"}}'
             )
@@ -122,12 +182,14 @@ def eval_referent_reduction(cases, repeats=1):
             b_counts, s_counts = zip(*results)
             b_med = statistics.median(b_counts)
             s_med = max(statistics.median(s_counts), 1)
-            scores.append({
-                "id": tc.get("id", ""),
-                "baseline_referent_count": b_med,
-                "skill_referent_count": s_med,
-                "reduction_ratio": round(b_med / s_med, 1),
-            })
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "baseline_referent_count": b_med,
+                    "skill_referent_count": s_med,
+                    "reduction_ratio": round(b_med / s_med, 1),
+                }
+            )
     return scores
 
 
@@ -141,24 +203,29 @@ def eval_sentence_selfcheck(cases, repeats=1):
         if not sentences:
             continue
 
-        # batch all sentences into one judge call
-        numbered = "\n".join(f"{i+1}. {s}" for i, s in enumerate(sentences))
+        numbered = "\n".join(f"{i + 1}. {s}" for i, s in enumerate(sentences))
         result = judge(
             f"for each numbered sentence below, answer: could this sentence describe "
-            f"a DIFFERENT {subject} equally well? answer yes or no for each.\n\n"
+            f"a different {subject} equally well? answer yes or no for each.\n\n"
             f"{numbered}\n\n"
-            f'respond as: {{"results": [{{"sentence": 1, "could_describe_other": "yes/no"}},...]}}'
+            f'respond as: {{"results": [{{"sentence": 1, "could_describe_other": "yes/no"}}, ...]}}'
         )
 
         if "error" not in result:
             results = result.get("results", [])
-            passing = sum(1 for r in results if r.get("could_describe_other", "yes").lower() == "no")
-            scores.append({
-                "id": tc.get("id", ""),
-                "total_sentences": len(sentences),
-                "passing_sentences": passing,
-                "pass_rate": round(passing / len(sentences), 2),
-            })
+            passing = sum(
+                1
+                for r in results
+                if r.get("could_describe_other", "yes").lower() == "no"
+            )
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "total_sentences": len(sentences),
+                    "passing_sentences": passing,
+                    "pass_rate": round(passing / len(sentences), 2),
+                }
+            )
     return scores
 
 
@@ -171,15 +238,15 @@ def eval_information_density(cases, repeats=1):
 
         b = judge(
             f"list every distinct, concrete, verifiable fact in this text. "
-            f"only count things that are specific (not generic platitudes).\n\n"
+            f"only count things that are specific, not generic platitudes.\n\n"
             f'text: "{baseline}"\n\n'
-            f'respond as: {{"facts": ["fact1", "fact2", ...], "count": <integer>}}'
+            f'respond as: {{"facts": ["fact1", "fact2"], "count": <integer>}}'
         )
         s = judge(
             f"list every distinct, concrete, verifiable fact in this text. "
-            f"only count things that are specific (not generic platitudes).\n\n"
+            f"only count things that are specific, not generic platitudes.\n\n"
             f'text: "{skill}"\n\n'
-            f'respond as: {{"facts": ["fact1", "fact2", ...], "count": <integer>}}'
+            f'respond as: {{"facts": ["fact1", "fact2"], "count": <integer>}}'
         )
 
         if "error" not in b and "error" not in s:
@@ -187,14 +254,16 @@ def eval_information_density(cases, repeats=1):
             s_count = s.get("count", 0)
             b_wc = max(word_count(baseline), 1)
             s_wc = max(word_count(skill), 1)
-            scores.append({
-                "id": tc.get("id", ""),
-                "baseline_facts": b_count,
-                "baseline_density": round(b_count / b_wc, 3),
-                "skill_facts": s_count,
-                "skill_density": round(s_count / s_wc, 3),
-                "density_gain": round((s_count / s_wc) / max(b_count / b_wc, 0.001), 2),
-            })
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "baseline_facts": b_count,
+                    "baseline_density": round(b_count / b_wc, 3),
+                    "skill_facts": s_count,
+                    "skill_density": round(s_count / s_wc, 3),
+                    "density_gain": round((s_count / s_wc) / max(b_count / b_wc, 0.001), 2),
+                }
+            )
     return scores
 
 
@@ -212,15 +281,18 @@ def eval_discriminability(cases, repeats=1):
 
         batch = group[:5]
         descriptions = [tc["skill_output"] for tc in batch]
-        subjects = [tc.get("input_text", tc.get("id", f"subject_{i}")) for i, tc in enumerate(batch)]
+        subjects = [
+            tc.get("input_text", tc.get("id", f"subject_{i}")) for i, tc in enumerate(batch)
+        ]
 
-        import random
         shuffled_indices = list(range(len(descriptions)))
         random.shuffle(shuffled_indices)
         shuffled_descs = [descriptions[i] for i in shuffled_indices]
 
-        desc_block = "\n\n".join(f"Description {i+1}: {d}" for i, d in enumerate(shuffled_descs))
-        subj_block = "\n".join(f"{chr(65+i)}. {s}" for i, s in enumerate(subjects))
+        desc_block = "\n\n".join(
+            f"Description {i + 1}: {d}" for i, d in enumerate(shuffled_descs)
+        )
+        subj_block = "\n".join(f"{chr(65 + i)}. {s}" for i, s in enumerate(subjects))
 
         result = judge(
             f"match each description to its subject. each description corresponds to exactly one subject.\n\n"
@@ -234,17 +306,21 @@ def eval_discriminability(cases, repeats=1):
             for m in matches:
                 desc_idx = m.get("description", 0) - 1
                 subj_letter = m.get("subject", "")
-                expected_subj_idx = shuffled_indices[desc_idx] if desc_idx < len(shuffled_indices) else -1
+                expected_subj_idx = (
+                    shuffled_indices[desc_idx] if desc_idx < len(shuffled_indices) else -1
+                )
                 actual_letter = chr(65 + expected_subj_idx) if expected_subj_idx >= 0 else ""
                 if subj_letter == actual_letter:
                     correct += 1
 
-            scores.append({
-                "subject_type": stype,
-                "total": len(batch),
-                "correct": correct,
-                "accuracy": round(correct / len(batch), 2),
-            })
+            scores.append(
+                {
+                    "subject_type": stype,
+                    "total": len(batch),
+                    "correct": correct,
+                    "accuracy": round(correct / len(batch), 2),
+                }
+            )
     return scores
 
 
@@ -257,28 +333,35 @@ def eval_precision_vector(cases, repeats=1):
         subject = tc.get("subject_type", "thing")
 
         result = judge(
-            f"rate this description of a {subject} on three precision axes (0-10 each):\n\n"
-            f"purpose of this description: {purpose}\n\n"
+            f"rate this description of a {subject} on three precision axes from 0-10.\n\n"
+            f"purpose: {purpose}\n\n"
             f'description: "{skill}"\n\n'
             f"axes:\n"
-            f"- denotative: how well does it narrow down WHICH {subject} this is? (referent reduction)\n"
-            f"- connotative: how well does it convey the emotional/tonal feel of the {subject}?\n"
-            f"- pragmatic: how well does it achieve the stated purpose ({purpose})?\n\n"
+            f"- denotative: how well does it narrow down which {subject} this is?\n"
+            f"- connotative: how well does it convey the emotional or tonal feel?\n"
+            f"- pragmatic: how well does it achieve the stated purpose?\n\n"
             f'respond as: {{"denotative": <0-10>, "connotative": <0-10>, "pragmatic": <0-10>, "reasoning": "<brief>"}}'
         )
 
         if "error" not in result:
-            scores.append({
-                "id": tc.get("id", ""),
-                "denotative": result.get("denotative", 0),
-                "connotative": result.get("connotative", 0),
-                "pragmatic": result.get("pragmatic", 0),
-                "mean": round(statistics.mean([
-                    result.get("denotative", 0),
-                    result.get("connotative", 0),
-                    result.get("pragmatic", 0),
-                ]), 1),
-            })
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "denotative": result.get("denotative", 0),
+                    "connotative": result.get("connotative", 0),
+                    "pragmatic": result.get("pragmatic", 0),
+                    "mean": round(
+                        statistics.mean(
+                            [
+                                result.get("denotative", 0),
+                                result.get("connotative", 0),
+                                result.get("pragmatic", 0),
+                            ]
+                        ),
+                        1,
+                    ),
+                }
+            )
     return scores
 
 
@@ -292,19 +375,21 @@ def eval_voice_preservation(cases, repeats=1):
         result = judge(
             f"compare the original text to the rewritten version. "
             f"rate 0-10 how well the rewrite preserves the original writer's voice, tone, and register. "
-            f"10 = identical voice, just more precise. 0 = completely different voice.\n\n"
+            f"10 means identical voice, just more precise. 0 means completely different voice.\n\n"
             f'original: "{original}"\n\n'
             f'rewrite: "{skill}"\n\n'
             f'respond as: {{"score": <0-10>, "markers_preserved": ["..."], "markers_lost": ["..."]}}'
         )
 
         if "error" not in result:
-            scores.append({
-                "id": tc.get("id", ""),
-                "score": result.get("score", 0),
-                "markers_preserved": result.get("markers_preserved", []),
-                "markers_lost": result.get("markers_lost", []),
-            })
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "score": result.get("score", 0),
+                    "markers_preserved": result.get("markers_preserved", []),
+                    "markers_lost": result.get("markers_lost", []),
+                }
+            )
     return scores
 
 
@@ -316,18 +401,20 @@ def eval_coherence(cases, repeats=1):
 
         result = judge(
             f"rate 0-10 how natural this text reads as prose. "
-            f"0 = thesaurus vomit, unreadable. 5 = functional but awkward. "
-            f"10 = could appear in published writing.\n\n"
+            f"0 means unreadable. 5 means functional but awkward. "
+            f"10 means it could appear in published writing.\n\n"
             f'text: "{skill}"\n\n'
             f'respond as: {{"score": <0-10>, "issues": ["..."]}}'
         )
 
         if "error" not in result:
-            scores.append({
-                "id": tc.get("id", ""),
-                "score": result.get("score", 0),
-                "issues": result.get("issues", []),
-            })
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "score": result.get("score", 0),
+                    "issues": result.get("issues", []),
+                }
+            )
     return scores
 
 
@@ -343,8 +430,8 @@ def eval_vagueness_detection(cases, repeats=1):
         expected = tc["expected_vague"]
 
         result = judge(
-            f"is this text vague or precise? vague = uses generic terms, hedges, "
-            f"could describe many things. precise = uses specific terms, narrows referent set.\n\n"
+            f"is this text vague or precise? vague uses generic terms, hedges, or language "
+            f"that could describe many things. precise narrows the referent set.\n\n"
             f'text: "{text}"\n\n'
             f'respond as: {{"classification": "vague" or "precise", "vague_terms": ["..."], "confidence": <0-1>}}'
         )
@@ -352,13 +439,15 @@ def eval_vagueness_detection(cases, repeats=1):
         if "error" not in result:
             classified_vague = result.get("classification", "").lower() == "vague"
             correct = classified_vague == expected
-            scores.append({
-                "id": tc.get("id", ""),
-                "expected": "vague" if expected else "precise",
-                "predicted": result.get("classification", "unknown"),
-                "correct": correct,
-                "vague_terms": result.get("vague_terms", []),
-            })
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "expected": "vague" if expected else "precise",
+                    "predicted": result.get("classification", "unknown"),
+                    "correct": correct,
+                    "vague_terms": result.get("vague_terms", []),
+                }
+            )
     return scores
 
 
@@ -373,9 +462,8 @@ def eval_crossling_validation(cases, repeats=1):
         for term in tc["crossling_terms"]:
             result = judge(
                 f'is the word "{term["term"]}" from {term["language"]} actually used '
-                f'to mean what is claimed here? rate your confidence 0-1 that this is '
-                f'a real, accurately described term.\n\n'
-                f'stated meaning context: used in a description to add precision\n\n'
+                f"to mean what is claimed here? rate your confidence from 0-1.\n\n"
+                f"stated meaning context: used in a description to add precision\n\n"
                 f'respond as: {{"is_real": true/false, "confidence": <0-1>, "correction": "<if wrong, what it actually means>"}}'
             )
 
@@ -384,21 +472,22 @@ def eval_crossling_validation(cases, repeats=1):
                     term.get("stated_confidence", "medium"), 0.5
                 )
                 actual = result.get("confidence", 0)
-                scores.append({
-                    "id": tc.get("id", ""),
-                    "term": term["term"],
-                    "language": term["language"],
-                    "is_real": result.get("is_real", False),
-                    "stated_confidence": stated,
-                    "judge_confidence": actual,
-                    "calibration_error": round(abs(stated - actual), 2),
-                })
+                scores.append(
+                    {
+                        "id": tc.get("id", ""),
+                        "term": term["term"],
+                        "language": term["language"],
+                        "is_real": result.get("is_real", False),
+                        "stated_confidence": stated,
+                        "judge_confidence": actual,
+                        "calibration_error": round(abs(stated - actual), 2),
+                    }
+                )
     return scores
 
 
 def eval_audience_adaptation(cases, repeats=1):
     """given same input with different audiences, does output actually differ appropriately?"""
-    # group by input_text to find pairs
     by_input = {}
     for tc in cases:
         key = tc.get("input_text", "")
@@ -417,33 +506,168 @@ def eval_audience_adaptation(cases, repeats=1):
             f'input: "{input_text}"\n\n'
             f'audience A ({a["audience"]}): "{a["skill_output"]}"\n\n'
             f'audience B ({b["audience"]}): "{b["skill_output"]}"\n\n'
-            f"rate 0-10: how well do these differ in ways appropriate for their respective audiences? "
-            f"0 = identical outputs. 10 = perfectly adapted to each audience.\n\n"
+            f"rate 0-10: how well do these differ in ways appropriate for their respective audiences?\n\n"
             f'respond as: {{"score": <0-10>, "differences_noted": ["..."]}}'
         )
 
         if "error" not in result:
-            scores.append({
-                "input": input_text[:80],
-                "audience_a": a["audience"],
-                "audience_b": b["audience"],
-                "score": result.get("score", 0),
-                "differences": result.get("differences_noted", []),
-            })
+            scores.append(
+                {
+                    "input": input_text[:80],
+                    "audience_a": a["audience"],
+                    "audience_b": b["audience"],
+                    "score": result.get("score", 0),
+                    "differences": result.get("differences_noted", []),
+                }
+            )
+    return scores
+
+
+def eval_vocabulary_match(cases, repeats=1):
+    """does the vocabulary fit the audience's fluency ceiling?"""
+    scored_cases = [tc for tc in cases if tc.get("audience_profile")]
+    scores = []
+    for tc in scored_cases:
+        result = judge(
+            f"score 0-10 how well the vocabulary of this text matches the target audience's domain fluency.\n\n"
+            f"audience: {tc.get('audience', 'unspecified')}\n"
+            f"audience_profile: {format_audience_profile(tc)}\n"
+            f"domain_profile: {tc.get('domain_profile', 'none')}\n\n"
+            f'text: "{tc["skill_output"]}"\n\n'
+            f'respond as: {{"score": <0-10>, "fit": "too_simple|matched|too_jargony", "reasoning": "<brief>"}}'
+        )
+        if "error" not in result:
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "score": result.get("score", 0),
+                    "fit": result.get("fit", "unknown"),
+                    "reasoning": result.get("reasoning", ""),
+                }
+            )
+    return scores
+
+
+def eval_precision_calibration(cases, repeats=1):
+    """is the text under-specified, matched, or over-specified for the audience?"""
+    scored_cases = [
+        tc for tc in cases if tc.get("audience_profile") and tc.get("expected_calibration")
+    ]
+    scores = []
+    for tc in scored_cases:
+        result = judge(
+            f"classify whether this text is under-specified, matched, or over-specified for the target audience and domain.\n\n"
+            f"purpose: {tc.get('purpose', 'unspecified')}\n"
+            f"audience: {tc.get('audience', 'unspecified')}\n"
+            f"audience_profile: {format_audience_profile(tc)}\n"
+            f"domain_constraints: {format_constraints(tc)}\n"
+            f"expected_calibration: {tc.get('expected_calibration')}\n\n"
+            f'text: "{tc["skill_output"]}"\n\n'
+            f'respond as: {{"classification": "under-specified|matched|over-specified", "score": <0-10>, "reasoning": "<brief>"}}'
+        )
+        if "error" not in result:
+            classification = result.get("classification", "unknown")
+            expected = tc.get("expected_calibration")
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "classification": classification,
+                    "expected": expected,
+                    "score": result.get("score", 0),
+                    "correct": classification == expected,
+                    "reasoning": result.get("reasoning", ""),
+                }
+            )
+    return scores
+
+
+def eval_constraint_compliance(cases, repeats=1):
+    """are required and forbidden domain constraints respected?"""
+    scored_cases = [tc for tc in cases if has_constraint_metadata(tc)]
+    scores = []
+    for tc in scored_cases:
+        result = judge(
+            f"score 0-10 how well this text complies with the given domain constraints.\n\n"
+            f"constraints: {format_constraints(tc)}\n\n"
+            f'text: "{tc["skill_output"]}"\n\n'
+            f'respond as: {{"score": <0-10>, "missing_required_terms": ["..."], "forbidden_terms_present": ["..."], "precision_ceiling_issues": ["..."], "reasoning": "<brief>"}}'
+        )
+        if "error" not in result:
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "score": result.get("score", 0),
+                    "missing_required_terms": result.get("missing_required_terms", []),
+                    "forbidden_terms_present": result.get("forbidden_terms_present", []),
+                    "precision_ceiling_issues": result.get("precision_ceiling_issues", []),
+                    "reasoning": result.get("reasoning", ""),
+                }
+            )
+    return scores
+
+
+def eval_evidence_calibration(cases, repeats=1):
+    """does the support level match the audience's epistemic stance?"""
+    scored_cases = [tc for tc in cases if tc.get("audience_profile")]
+    scores = []
+    for tc in scored_cases:
+        result = judge(
+            f"score 0-10 how well this text's support, hedging, and certainty match the audience's epistemic stance.\n\n"
+            f"purpose: {tc.get('purpose', 'unspecified')}\n"
+            f"audience_profile: {format_audience_profile(tc)}\n\n"
+            f'text: "{tc["skill_output"]}"\n\n'
+            f'respond as: {{"score": <0-10>, "fit": "under-supported|matched|over-qualified", "reasoning": "<brief>"}}'
+        )
+        if "error" not in result:
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "score": result.get("score", 0),
+                    "fit": result.get("fit", "unknown"),
+                    "reasoning": result.get("reasoning", ""),
+                }
+            )
+    return scores
+
+
+def eval_compression_fit(cases, repeats=1):
+    """does the density match the audience's attention budget?"""
+    scored_cases = [tc for tc in cases if tc.get("audience_profile")]
+    scores = []
+    for tc in scored_cases:
+        result = judge(
+            f"score 0-10 how well the density and pacing of this text match the audience's attention budget.\n\n"
+            f"purpose: {tc.get('purpose', 'unspecified')}\n"
+            f"audience_profile: {format_audience_profile(tc)}\n\n"
+            f'text: "{tc["skill_output"]}"\n\n'
+            f'respond as: {{"score": <0-10>, "fit": "too_sparse|matched|too_dense", "reasoning": "<brief>"}}'
+        )
+        if "error" not in result:
+            scores.append(
+                {
+                    "id": tc.get("id", ""),
+                    "score": result.get("score", 0),
+                    "fit": result.get("fit", "unknown"),
+                    "reasoning": result.get("reasoning", ""),
+                }
+            )
     return scores
 
 
 # --- aggregation ---
 
 
-def aggregate(metric_name, scores):
+def aggregate(metric_name, scores, total_cases):
     if not scores:
-        return {"n": 0, "note": "no applicable test cases"}
+        return {"n": 0, "skipped_due_to_missing_metadata": total_cases, "note": "no applicable test cases"}
 
     if metric_name == "referent_reduction":
         ratios = [s["reduction_ratio"] for s in scores]
-        return {"n": len(ratios), "mean_reduction": round(statistics.mean(ratios), 1),
-                "median_reduction": round(statistics.median(ratios), 1)}
+        return {
+            "n": len(ratios),
+            "mean_reduction": round(statistics.mean(ratios), 1),
+            "median_reduction": round(statistics.median(ratios), 1),
+        }
 
     if metric_name == "sentence_selfcheck":
         rates = [s["pass_rate"] for s in scores]
@@ -466,23 +690,52 @@ def aggregate(metric_name, scores):
             "mean_overall": round(statistics.mean([s["mean"] for s in scores]), 1),
         }
 
-    if metric_name in ("voice_preservation", "coherence"):
+    if metric_name in (
+        "voice_preservation",
+        "coherence",
+        "audience_adaptation",
+        "vocabulary_match",
+        "constraint_compliance",
+        "evidence_calibration",
+        "compression_fit",
+    ):
         vals = [s["score"] for s in scores]
-        return {"n": len(vals), "mean_score": round(statistics.mean(vals), 1)}
+        summary = {"n": len(vals), "mean_score": round(statistics.mean(vals), 1)}
+        if metric_name in (
+            "vocabulary_match",
+            "constraint_compliance",
+            "evidence_calibration",
+            "compression_fit",
+        ):
+            summary["skipped_due_to_missing_metadata"] = max(total_cases - len(vals), 0)
+        return summary
 
     if metric_name == "vagueness_detection":
         correct = sum(1 for s in scores if s["correct"])
-        return {"n": len(scores), "accuracy": round(correct / len(scores), 2)}
+        return {
+            "n": len(scores),
+            "accuracy": round(correct / len(scores), 2),
+            "skipped_due_to_missing_metadata": max(total_cases - len(scores), 0),
+        }
 
     if metric_name == "crossling_validation":
         real = sum(1 for s in scores if s["is_real"])
         cal_errors = [s["calibration_error"] for s in scores]
-        return {"n": len(scores), "real_rate": round(real / len(scores), 2),
-                "mean_calibration_error": round(statistics.mean(cal_errors), 2)}
+        return {
+            "n": len(scores),
+            "real_rate": round(real / len(scores), 2),
+            "mean_calibration_error": round(statistics.mean(cal_errors), 2),
+            "skipped_due_to_missing_metadata": max(total_cases - len(scores), 0),
+        }
 
-    if metric_name == "audience_adaptation":
-        vals = [s["score"] for s in scores]
-        return {"n": len(vals), "mean_score": round(statistics.mean(vals), 1)}
+    if metric_name == "precision_calibration":
+        correct = sum(1 for s in scores if s["correct"])
+        return {
+            "n": len(scores),
+            "mean_score": round(statistics.mean([s["score"] for s in scores]), 1),
+            "classification_accuracy": round(correct / len(scores), 2),
+            "skipped_due_to_missing_metadata": max(total_cases - len(scores), 0),
+        }
 
     return {"n": len(scores)}
 
@@ -501,6 +754,11 @@ METRIC_FUNCS = {
     "vagueness_detection": eval_vagueness_detection,
     "crossling_validation": eval_crossling_validation,
     "audience_adaptation": eval_audience_adaptation,
+    "vocabulary_match": eval_vocabulary_match,
+    "precision_calibration": eval_precision_calibration,
+    "constraint_compliance": eval_constraint_compliance,
+    "evidence_calibration": eval_evidence_calibration,
+    "compression_fit": eval_compression_fit,
 }
 
 
@@ -531,7 +789,7 @@ def run_eval(test_cases_path, metrics=None, output_path="results.json", repeats=
         start = time.time()
         scores = METRIC_FUNCS[metric](cases, repeats=repeats)
         elapsed = round(time.time() - start, 1)
-        agg = aggregate(metric, scores)
+        agg = aggregate(metric, scores, total_cases=len(cases))
 
         results["metrics"][metric] = {
             "scores": scores,
@@ -540,7 +798,6 @@ def run_eval(test_cases_path, metrics=None, output_path="results.json", repeats=
         }
         print(f"done ({elapsed}s, {agg.get('n', 0)} scored)")
 
-    # summary
     summary = {}
     for name, data in results["metrics"].items():
         agg = data["aggregate"]
@@ -581,10 +838,10 @@ def run_eval(test_cases_path, metrics=None, output_path="results.json", repeats=
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="language precision eval")
-    parser.add_argument("--test-cases", required=True, help="path to test cases JSON")
+    parser.add_argument("--test-cases", required=True, help="path to test cases json")
     parser.add_argument("--output", default="results.json", help="output path")
-    parser.add_argument("--metrics", default=None, help="comma-separated metric names (default: all)")
-    parser.add_argument("--repeats", type=int, default=1, help="repeat each judgment N times, take median")
+    parser.add_argument("--metrics", default=None, help="comma-separated metric names")
+    parser.add_argument("--repeats", type=int, default=1, help="repeat each judgment n times")
     args = parser.parse_args()
 
     metrics = args.metrics.split(",") if args.metrics else None

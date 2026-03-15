@@ -7,7 +7,20 @@
       "purpose": "general explanation",
       "expected_vague": false,
       "baseline_output": "Daily meditation improves focus, emotional regulation, stress reduction, and overall mental clarity. Meditation trains attention and helps people observe thoughts without reacting impulsively. Regular practice lowers stress by calming the nervous system and reducing cortisol levels. Over time, it improves concentration, mood stability, sleep quality, and self-awareness, supporting long-term psychological well-being and healthier responses to everyday challenges.",
-      "skill_output": "Meditation builds a delay between stimulus and reaction — you notice the urge to check your phone, snap at someone, or spiral, and choose not to. Physiologically: lower resting cortisol, improved vagal tone, denser prefrontal gray matter after ~8 weeks. The returns compound invisibly. You don't feel sharper daily. You realize it quarterly."
+      "skill_output": "Meditation builds a delay between stimulus and reaction - you notice the urge to check your phone, snap at someone, or spiral, and choose not to. Physiologically: lower resting cortisol, improved vagal tone, denser prefrontal gray matter after ~8 weeks. The returns compound invisibly. You don't feel sharper daily. You realize it quarterly.",
+      "audience": "broad educated audience",
+      "audience_profile": {
+        "domain_fluency": 3,
+        "attention_budget": 4,
+        "epistemic_stance": 5,
+        "action_orientation": 4
+      },
+      "domain_profile": "blog_post",
+      "precision_ceiling": {
+        "numbers_sig_figs": 2,
+        "time_granularity": "week"
+      },
+      "expected_calibration": "matched"
     },
     {
       "id": "person_from_todos",
@@ -16,7 +29,15 @@
       "purpose": "personal description",
       "expected_vague": false,
       "baseline_output": "A curious, systems-minded builder chasing leverage across AI, infrastructure, robotics, and personal workflow. You think in tools, networks, data loops, and experimentation, with strong taste for unconventional projects. You want not just to use technology, but to shape your environment, thinking, and output through deeply integrated systems.",
-      "skill_output": "Builds hardware and software simultaneously — robotic chessboards, ESP32 jammers, olfactory devices — then writes the marketing copy himself. Treats his own workflow as an engineering problem (offline calendar, tool-stack documentation). Collects ideas compulsively, acts on a fraction of them. More interested in what's trainable than what's trending. Undergraduate energy, founder instincts."
+      "skill_output": "Builds hardware and software simultaneously - robotic chessboards, ESP32 jammers, olfactory devices - then writes the marketing copy himself. Treats his own workflow as an engineering problem (offline calendar, tool-stack documentation). Collects ideas compulsively, acts on a fraction of them. More interested in what's trainable than what's trending. Undergraduate energy, founder instincts.",
+      "audience": "new collaborator",
+      "audience_profile": {
+        "domain_fluency": 4,
+        "attention_budget": 5,
+        "epistemic_stance": 4,
+        "action_orientation": 5
+      },
+      "expected_calibration": "matched"
     },
     {
       "id": "sunset",
@@ -25,7 +46,15 @@
       "purpose": "vivid description",
       "expected_vague": false,
       "baseline_output": "The sun sinks slowly, spilling molten gold across the horizon. Clouds blush crimson and violet, their edges lit like embers. Warm light ripples over quiet water while shadows stretch across the land. The sky deepens and the last flame of daylight fades into a calm luminous dusk soft and endless.",
-      "skill_output": "The light doesn't fade evenly — the western sky goes copper while the east is already bruise-blue. Shadows lengthen faster than you expect. The air cools on your forearms before you consciously register the sun is gone. For thirty seconds, every surface facing west turns the same warm orange."
+      "skill_output": "The light doesn't fade evenly - the western sky goes copper while the east is already bruise-blue. Shadows lengthen faster than you expect. The air cools on your forearms before you consciously register the sun is gone. For thirty seconds, every surface facing west turns the same warm orange.",
+      "audience": "literary reader",
+      "audience_profile": {
+        "domain_fluency": 3,
+        "attention_budget": 6,
+        "epistemic_stance": 2,
+        "action_orientation": 1
+      },
+      "expected_calibration": "matched"
     },
     {
       "id": "conversation_people",
@@ -33,8 +62,16 @@
       "subject_type": "group",
       "purpose": "social observation",
       "expected_vague": false,
-      "baseline_output": "Three curious collaborators rapidly exploring an idea about AI systems that improve how humans describe things. The speakers appear intellectually playful and exploratory, bouncing ideas off one another with high energy and minimal hierarchy. Their conversation reflects a startup-style brainstorming vibe—fast, associative, and speculative. They repeatedly build on each other's thoughts about AI agents that refine descriptions, personalize language, and adapt to social contexts. The tone suggests curiosity, openness, and intellectual excitement, with frequent interruptions and unfinished thoughts typical of creative ideation. References to linguistics, math models, advertising, and philosophy indicate analytical, interdisciplinary thinkers. The overall atmosphere feels like friends or collaborators spontaneously generating product concepts, enthusiastic about turning abstract language theory into practical tools.",
-      "skill_output": "Three people building in public, mid-brainstorm, getting kicked out of rooms. One drives the technical architecture (agents, sliders, formalization), one connects everything to applications (copywriting, job apps, advertising), one keeps asking 'but what does it look like for the user?' — quiz systems, synonym selectors, live-updating interfaces.\n\nThe vibe is high-trust intellectual riffing with zero hierarchy. Ideas get picked up, extended, and mutated fast. Nobody's filtering for feasibility yet — they're mapping the possibility space. Frequent interruptions are signs of excitement, not rudeness. The conversation has the specific energy of people who met recently but think compatibly — building shared vocabulary in real time."
+      "baseline_output": "Three curious collaborators rapidly exploring an idea about AI systems that improve how humans describe things. The speakers appear intellectually playful and exploratory, bouncing ideas off one another with high energy and minimal hierarchy. Their conversation reflects a startup-style brainstorming vibe-fast, associative, and speculative. They repeatedly build on each other's thoughts about AI agents that refine descriptions, personalize language, and adapt to social contexts. The tone suggests curiosity, openness, and intellectual excitement, with frequent interruptions and unfinished thoughts typical of creative ideation. References to linguistics, math models, advertising, and philosophy indicate analytical, interdisciplinary thinkers. The overall atmosphere feels like friends or collaborators spontaneously generating product concepts, enthusiastic about turning abstract language theory into practical tools.",
+      "skill_output": "Three people building in public, mid-brainstorm, getting kicked out of rooms. One drives the technical architecture (agents, sliders, formalization), one connects everything to applications (copywriting, job apps, advertising), one keeps asking 'but what does it look like for the user?' - quiz systems, synonym selectors, live-updating interfaces.\n\nThe vibe is high-trust intellectual riffing with zero hierarchy. Ideas get picked up, extended, and mutated fast. Nobody's filtering for feasibility yet - they're mapping the possibility space. Frequent interruptions are signs of excitement, not rudeness. The conversation has the specific energy of people who met recently but think compatibly - building shared vocabulary in real time.",
+      "audience": "product case-study reader",
+      "audience_profile": {
+        "domain_fluency": 4,
+        "attention_budget": 6,
+        "epistemic_stance": 4,
+        "action_orientation": 5
+      },
+      "expected_calibration": "matched"
     },
     {
       "id": "vague_baseline_nice",
@@ -43,7 +80,15 @@
       "purpose": "personal description",
       "expected_vague": true,
       "baseline_output": "she's a really nice person who does interesting work",
-      "skill_output": "she remembers your coffee order after meeting you once and publishes papers on protein folding that changed how three labs model molecular dynamics"
+      "skill_output": "she remembers your coffee order after meeting you once and publishes papers on protein folding that changed how three labs model molecular dynamics",
+      "audience": "smart friend",
+      "audience_profile": {
+        "domain_fluency": 3,
+        "attention_budget": 4,
+        "epistemic_stance": 4,
+        "action_orientation": 3
+      },
+      "expected_calibration": "matched"
     },
     {
       "id": "vague_baseline_company",
@@ -52,7 +97,15 @@
       "purpose": "company description",
       "expected_vague": true,
       "baseline_output": "it's a great company with an innovative culture",
-      "skill_output": "40-person climate tech startup that ships hardware prototypes in 2-week cycles and lets any engineer kill a feature if they can show it won't be used"
+      "skill_output": "40-person climate tech startup that ships hardware prototypes in 2-week cycles and lets any engineer kill a feature if they can show it won't be used",
+      "audience": "job candidate",
+      "audience_profile": {
+        "domain_fluency": 4,
+        "attention_budget": 4,
+        "epistemic_stance": 5,
+        "action_orientation": 6
+      },
+      "expected_calibration": "matched"
     },
     {
       "id": "precise_baseline_specific",
@@ -61,7 +114,15 @@
       "purpose": "personal description",
       "expected_vague": false,
       "baseline_output": "she's the kind of person who debugs your code at 2am without being asked and then doesn't mention it",
-      "skill_output": "she's the kind of person who debugs your code at 2am without being asked and then doesn't mention it"
+      "skill_output": "she's the kind of person who debugs your code at 2am without being asked and then doesn't mention it",
+      "audience": "friend",
+      "audience_profile": {
+        "domain_fluency": 2,
+        "attention_budget": 4,
+        "epistemic_stance": 3,
+        "action_orientation": 2
+      },
+      "expected_calibration": "matched"
     },
     {
       "id": "crossling_nostalgia",
@@ -69,11 +130,23 @@
       "subject_type": "emotion",
       "purpose": "emotional precision",
       "baseline_output": "a deep longing for a place you've never visited, a bittersweet yearning for somewhere that exists only in imagination",
-      "skill_output": "a longing for a place you've never been — not memory but imagined belonging. the ache of recognizing somewhere in a photograph and feeling it should have been yours.",
+      "skill_output": "a longing for a place you've never been - not memory but imagined belonging. the ache of recognizing somewhere in a photograph and feeling it should have been yours.",
       "crossling_terms": [
-        {"term": "hiraeth", "language": "Welsh", "stated_confidence": "high"},
-        {"term": "saudade", "language": "Portuguese", "stated_confidence": "medium"},
-        {"term": "toska", "language": "Russian", "stated_confidence": "medium"}
+        {
+          "term": "hiraeth",
+          "language": "Welsh",
+          "stated_confidence": "high"
+        },
+        {
+          "term": "saudade",
+          "language": "Portuguese",
+          "stated_confidence": "medium"
+        },
+        {
+          "term": "toska",
+          "language": "Russian",
+          "stated_confidence": "medium"
+        }
       ]
     },
     {
@@ -83,7 +156,22 @@
       "purpose": "product explanation",
       "audience": "technical founders",
       "baseline_output": "it makes your writing more precise",
-      "skill_output": "NLP pipeline that detects vague segments in text via semantic entropy estimation, generates ranked replacement candidates using constrained decoding, and lets users control specificity depth via a continuous parameter. ships as a CLI skill, no infrastructure."
+      "skill_output": "NLP pipeline that detects vague segments in text via semantic entropy estimation, generates ranked replacement candidates using constrained decoding, and lets users control specificity depth via a continuous parameter. ships as a CLI skill, no infrastructure.",
+      "audience_profile": {
+        "domain_fluency": 8,
+        "attention_budget": 4,
+        "epistemic_stance": 6,
+        "action_orientation": 7
+      },
+      "domain_profile": "technical_docs",
+      "required_terms": [
+        "constraint"
+      ],
+      "precision_ceiling": {
+        "numbers_sig_figs": 2,
+        "time_granularity": "version"
+      },
+      "expected_calibration": "matched"
     },
     {
       "id": "audience_adapt_casual",
@@ -92,7 +180,110 @@
       "purpose": "product explanation",
       "audience": "friend at a bar",
       "baseline_output": "it makes your writing more precise",
-      "skill_output": "you know when you write 'it was a great experience' and it means nothing? this thing catches that and suggests what you actually mean. like autocorrect but for being vague."
+      "skill_output": "you know when you write 'it was a great experience' and it means nothing? this thing catches that and suggests what you actually mean. like autocorrect but for being vague.",
+      "audience_profile": {
+        "domain_fluency": 2,
+        "attention_budget": 3,
+        "epistemic_stance": 2,
+        "action_orientation": 4
+      },
+      "domain_profile": "blog_post",
+      "expected_calibration": "matched"
+    },
+    {
+      "id": "vc_pitch_constraint_violation",
+      "input_text": "describe our startup for investors",
+      "subject_type": "company",
+      "purpose": "investor pitch",
+      "audience": "seed investors",
+      "baseline_output": "we're building an exciting company in a huge market",
+      "skill_output": "hopefully this revolutionary platform becomes the operating system for warehouse coordination. demand looks strong and customers seem excited.",
+      "audience_profile": {
+        "domain_fluency": 6,
+        "attention_budget": 3,
+        "epistemic_stance": 8,
+        "action_orientation": 9
+      },
+      "domain_profile": "vc_pitch",
+      "required_terms": [
+        "runway",
+        "burn rate"
+      ],
+      "forbidden_terms": [
+        "hopefully",
+        "revolutionary"
+      ],
+      "precision_ceiling": {
+        "numbers_sig_figs": 2,
+        "time_granularity": "quarter"
+      },
+      "expected_calibration": "under-specified"
+    },
+    {
+      "id": "low_fluency_jargon_mismatch",
+      "input_text": "what changed in the new queue architecture?",
+      "subject_type": "system",
+      "purpose": "change explanation",
+      "audience": "ops-adjacent executive",
+      "baseline_output": "we made the queue more scalable",
+      "skill_output": "we externalized fan-out into partition-aware workers behind SQS and now accept eventual-consistency artifacts in retry ordering to avoid Redis saturation during burst loads",
+      "audience_profile": {
+        "domain_fluency": 2,
+        "attention_budget": 4,
+        "epistemic_stance": 6,
+        "action_orientation": 6
+      },
+      "domain_profile": "blog_post",
+      "expected_calibration": "over-specified"
+    },
+    {
+      "id": "skeptical_buyer_under_precision",
+      "input_text": "why should we buy this security product?",
+      "subject_type": "product",
+      "purpose": "purchase decision",
+      "audience": "security lead",
+      "baseline_output": "it improves your security posture",
+      "skill_output": "it helps teams catch more issues earlier and gives better visibility across the stack",
+      "audience_profile": {
+        "domain_fluency": 7,
+        "attention_budget": 5,
+        "epistemic_stance": 9,
+        "action_orientation": 8
+      },
+      "domain_profile": "technical_docs",
+      "required_terms": [
+        "failure mode"
+      ],
+      "expected_calibration": "under-specified"
+    },
+    {
+      "id": "technical_docs_matched",
+      "input_text": "document the API rate limit behavior",
+      "subject_type": "api",
+      "purpose": "technical documentation",
+      "audience": "integrating engineers",
+      "baseline_output": "the API has rate limits and may reject too many requests",
+      "skill_output": "the write endpoints enforce a rolling limit of 120 requests per minute per workspace. when exceeded, the API returns 429 with a Retry-After header. retries are safe for idempotent writes only.",
+      "audience_profile": {
+        "domain_fluency": 8,
+        "attention_budget": 5,
+        "epistemic_stance": 8,
+        "action_orientation": 8
+      },
+      "domain_profile": "technical_docs",
+      "required_terms": [
+        "constraint",
+        "failure mode"
+      ],
+      "forbidden_terms": [
+        "simply",
+        "obviously"
+      ],
+      "precision_ceiling": {
+        "numbers_sig_figs": 3,
+        "time_granularity": "minute"
+      },
+      "expected_calibration": "matched"
     }
   ]
 }

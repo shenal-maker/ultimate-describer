@@ -1,1 +1,1 @@
-keep in mind you need to run /describe-well first to make it describe things really well, and then if you want detailed analysis of hwo well it did, run /eval and paste the old + new texts there
+ultimate-describer is a repo for context-calibrated description and rewrite skills: first decide the right level of precision for the audience, domain, and purpose, then generate or rewrite language inside that calibration envelope.
