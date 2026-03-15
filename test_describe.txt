@@ -1,0 +1,1025 @@
+[BEGIN PROMPT 1]
+describe the benefits of a daily meditation practice in 50 words
+[END PROMPT 1]
+[BEGIN BASELINE 1.1: ChatGPT]
+Daily meditation improves focus, emotional regulation, stress reduction, and overall mental clarity.
+Meditation trains attention and helps people observe thoughts without reacting impulsively. Regular practice lowers stress by calming the nervous system and reducing cortisol levels. Over time, it improves concentration, mood stability, sleep quality, and self-awareness, supporting long-term psychological well-being and healthier responses to everyday challenges.
+[END BASELINE 1.1: ChatGPT]
+[BEGIN PROMPT 2]
+From this list of todos:
+test out claude for slides
+hop on https://renaissance.engineer/feed.html
+nose_cleaning.png in drive
+improve website (Obs"website improvements")
+what is agentic harness; how to make, etc
+Law?
+get really big into networking and ssh etc
+continue work on venn
+build olfactory fatigue device?
+Server
+how to prompt / model / something for easy model writing -> human writing (quality)
+https://www.reddit.com/r/LocalLLaMA/comments/1qd88v2/i_trained_a_model_to_unslop_ai_prose/?share_id=3Qvxw9LIsZ-DTK8nmjOPY&utm_content=1&utm_medium=android_app&utm_name=androidcss&utm_source=share&utm_term=1
+wifi hacking in general (desktop .txt)
+esp32 wifi jammer
+try out more of this: https://github.com/photon-hq (partially visible)
+scattered: try some Anote("other people things to try")
+reach out to some cool ppl; quest database, cool ppl list A note
+check out jhana
+do big robotics porject
+figure out what the next thing that they want to train on is and build something that optimizes it and collects data (only if want a cop out money deal though)
+longer past refleciton is underutlized but gives strong info
+pset generator from 3b1b videos
+agent to agent communication e.g. linkedin
+spend some time describing my entire stack (tools, workflows, os) (esp my mindsets and trying to squeeze every bit of idea out of my life)
+would be cool to have offline calendar & mail (hmm apple mail kinda bad?) that syncs when i have wifi (tbh everything should be like that)
+weird things about basic proportion inference statistics:
+estimation of sigma p as sigma p hat?? that feels very weird
+IF(“physics questions”)
+describe me in 50 words.
+[END PROMPT 2]
+[BEGIN BASELINE 2.1: ChatGPT]
+A curious, systems-minded builder chasing leverage across AI, infrastructure, robotics, and personal workflow. You think in tools, networks, data loops, and experimentation, with strong taste for unconventional projects. You want not just to use technology, but to shape your environment, thinking, and output through deeply integrated systems.
+[END BASELINE 2.1: ChatGPT]
+[BEGIN PROMPT 3]
+Describe a beautiful sunset in detail (50 words).
+[END PROMPT 3]
+[BEGIN BASELINE 3.1: ChatGPT]
+The sun sinks slowly, spilling molten gold across the horizon. Clouds blush crimson and violet, their edges lit like embers. Warm light ripples over quiet water while shadows stretch across the land. The sky deepens and the last flame of daylight fades into a calm luminous dusk soft and endless.
+[END BASELINE 3.1: ChatGPT]
+[BEGIN PROMPT 4]
+From this conversation between three people, describe the people and vibe in 100 words.
+okay so we were saying um i'll transcribe it yeah totally is that we have an agent that describes things well yeah and one idea is that it can start general and then keep being more specific until like a point where specificity reaches diminishing marginal utility um and some applications are like describing people well describing experiences well describing companies well describing ideas well um and then also like image or video generation so that's like story generation so that's one way we can like output it are you guys are you guys okay and then um also what would be cool is an agent that's always on and listens and like suggests ideas if there's really good ideas because there's so many times where like maybe you're just randomly talking to someone yeah and you're like oh i wish there was a tool back to this yeah yeah totally but then you don't write it down because you're in the conversation yeah yeah or like you can't just pull out your phone and start recording either yeah it's like it's just constantly listening yeah okay okay there's a room there's a room what if it's like what if it's like not allowed okay okay okay okay let's do it is that room open i want to say i'm sorry we've been kicked out we've been kicked out like three times already yeah there's tables outside that are super nice um or you can set up there's tables like just in that room that I also feel like. Okay. Oh. Wait, you should? Yes. Wait. Oh. Awesome. We also said we can have, like, different forms of describing things as well. So, like, an agent that can try to research. So, like, graph theory, visual representations. Just, like, images. Like, image generation. I guess it's also depending on the purpose of describing. Yeah. Okay. I think you also said a lot more. What do we talk about describing things? Oh, you mentioned, like, different languages and how... Oh, yeah, translations. Yeah. So, like, an example could be there's some culturally specific context that can only be explained in Chinese, and that particular word describes it way more precisely. than an English translation. Or even phrases. Like, idioms. Like, Taoism. I feel like that's something that translates really badly. Yeah. So, like, do we want to figure out how to translate those more precisely? Or... I guess application-wise, we can decide later. Okay. Like, one is video generation. I think translation could be one. Any sort of storytelling? Like, can I say relations? It kind of goes to your fit matching thing. Because, like, describing people is also one of the things. Yeah. How do we have to, like, verify ourselves? You know, I was thinking about describing people a little bit. I think maybe it's relevant, but, like, a system that we could potentially implement. Because, like, every person's description is relative to their social circle. So, if you can get input from everyone, from a particular social circle, you can map it. You know, in terms of agents, it could be, like, you create an agent that simulates this social circle. And you create an agent with, like, this other perspective. And then they could all come together and, like, have input on your description. One thing that would be cool is, like, okay, again, like, a more application-based idea, but if you're applying to, like, programs or jobs, et cetera, like, if the agents could map, like, what type of social circle that organization would want to. Oh, and then make it, frame it in that way so they like it more. That's actually what I'm doing with my journaling diary app. Oh, nice. But, like, I didn't implement it out yet. But that's what I was thinking. Because, like, every community, the adjectives to describe an individual is really relative. So you said you want to look for someone intense. But intensity means so many different things. Yes, that's true. It comes from, like, a Jimbo community versus SF Tech community. Yeah. So that's also something we can, like, make it relative. Yeah. I think that builds onto the idea of, like, if you're trying to describe someone or something for a specific purpose, then it should know that so that you can describe it well. Uh-huh. I wonder if they can describe skills better. Because, like, right now, pod skills are, like, the description is limited to what it's intended to do. But it doesn't really give a description of, like, when you use the skill versus when you don't use the skill. What's the difference in the output? So maybe description can also be something... Or, like, when to use the skill. Yeah. And when to stop using the skill. Yeah, yeah, yeah, yeah, yeah. Okay. And, like, I think I'll be really curious about, like, skill or, like, alternative. Can they use two skills at the same time? I'm not sure. Okay. I feel like that's something interesting. Because, like, if... You know, if we hadn't always listened to AI, it would just tell us. It would just say, oh, you can't do it. Or you can do it, right? It would go search it up. Can I interrupt? And, like, if she's talking about... Yeah, if she's talking about... Yeah, if she's talking about... Yeah. As in there. Oh, did you mention the self-improving agent? Oh, yeah. So it describes things better. So, like, by describing things better, it can improve itself more. Or just something around that is very, very promising. I have an idea. Okay. This is, like, random random. But what if we implement, like, descriptions of particular subject areas to describe skill sets? Like, one example that I'm thinking about is English literature. Like, metaphors, connotation, denotation. Like, just, like, those specific wording. I don't know. I don't know. I'm just thinking about that. And I feel like there's something to it. Because, like, when you research different subjects, you can point out different structures in a large chunk of text. Maybe, so, in that way, it can experiment with different ways of describing by using a particular set of words in a particular subject area. I don't know how that's going to look. I don't know how that's going to look. I don't know how that's going to look. Okay. What else? You have so many ideas. What if we also have something that's, like, using a mathematical model to describe something? So, like, I think I can try to see whether it can match with a math modeling way to describe a particular paragraph or first principles of reasoning, first principles of thinking, different mental models. I think that definitely builds on the idea of, like, framing in terms of someone's, like, social circle. Because if someone is, like, really into that kind of, like, abstract language, then we should be able to use that. Right. And then, like, there could be another person who would not like that at all. Oh, you know what? If we want to figure out what kind of description someone likes, maybe we have it read, like, something I write or something I read that I like. And then it would know, oh, I'm that type of person. And then it would describe things in my way. Can't we make it, like, quiz people in a comprehensive way? Oh, yeah. This way, like, I don't have to figure out what a good example for me is. It'll help you figure it out. It'll help me figure it out. Yeah, so it's, like, when you see a movie, how do you describe your emotion to reacting to something? Yeah. Like, sadness. Or maybe it gives me an example. Or, like, it gives me an example of a description. Yeah, and you're, like, which one do you like better? Because the thing is, like, if I don't know how to describe things well, like, I'm not going to be able to give it a good example. Yeah, yeah, yeah. If it gives me an example of a good description, or, like, multiple kinds of good descriptions of things, then I choose one I like the most. Like, it will know what kind of good description I like. I don't know why, but it suddenly reminds me of 1984, where in order to make people less, like, knowing, and they delete their words. So this is kind of doing the opposite. Yeah, we're giving more vocabulary. Yes. Yes, that's awesome. We're anti-1984. That's so cool. We're a brand new world. Yeah. Just kidding. Yeah. And this is also, like, not only AI is describing it better for a person, it's, like, teaching that person how to describe things better themselves. And it kind of goes against the whole philosophy of AI sloth. Yeah. Yeah. Where, like, it generalizes more. Yeah. So this is, like, generating. Yeah. It's more, like, anti, like, the AI sloth. Yeah. It's, like, you know, Entropic always has slogans like, thinking, you know, like, think more. Yeah. I think it's sort of along those lines, where, like, we encourage people to improve their own thinking. Yeah. Do these other things too. What if, like, when you're using it, it generates words based on what you, based on the quiz? Because, like, I write a lot in the, in high school, I write a lot of, like, English literature. And a lot of things is really just, you'd look at, like, I search up synonym list, and I think which one fits what I'm trying to convey the most. So that's also something that can be used during the process of description, where it's, like, hey, what do you think this, this feels more? Yeah. Because a lot of description is vibe-based. That definitely builds onto the original idea of, like, describing well by taking a vague term and just, like, replacing it with something more specific that actually applies to it. It's, like, you could be writing, and then AI's, like, oh, that's so vague. Like, and then it provides you with a list of synonyms, and you could pick one of them. So it's, like, assisting that process. We should also represent vagueness and preciseness visually, so we can kind of, like, adjusting the temperature, and you're like, hey, how vague or how precise do I want this? And what's the purpose? Yeah. I think that would be interesting. I don't think you have, like, a cloud of words. And you move from the clouds. Wait, look at this. Oh, shoot. I'm sure. Okay, I hope this records the words. But I think we have this idea of that. Kind of like this. So my friend made this thing. Oh. Where you can, like, do a slider. And then, like, it could change the words live. Wow. This is awesome. Yeah. So this could, we could do this, but for specificity and vagueness. Mmm. I wonder whether there's a formal theory to describe things. Yeah, we should formalize a theory. Yeah. Because I think if we actually have a theory and we do some, like, more rigorous work, then we could, like, justify our descriptions and say that they're actually better. Yeah. If we're just like, oh, you know, we prompt engineer the AI to describe things better, then that's very, like, flimsy, right? And then I feel like if we have a formalized theory with a slider, that's, like, way better because we can compare, like, when we adjust a different. Yeah. Yeah. And if we have the before and after, we can show people and they'll be like, oh, yeah, that actually really is much better. Yeah. Yeah. Okay. I feel like this could, wait, wait, wait, wait, wait, wait. Yeah, okay, go. I feel like this could also be, like, crazy for advertising because, like, I feel like a lot of ads right now are just, like, generic, like, I don't really understand what's going on. Yeah. But if they're able to target and, like, describe well, maybe I'll actually think it's, like, okay, that's pretty cool. Then maybe I'll actually buy it. Yeah, yeah. So, coffee writing, like, specific target audiences is, like, let me think. Because, previously, when I tried to do copywriting, sometimes I just, like, copy and paste. Wait, what is copywriting? Um, it's, like, it's basically just writing advertisement. Oh, okay. So, sometimes the things I do is I basically copy and paste a text. Um, so when I was working on the robotic chessboard, I basically went on to Reddit to find a particular stereotype of a person that I want, and I just copy and paste. I'm like, okay, write a copywriting website specifically targeted towards that one particular person. Oh, that's really cool. So, I think there's something to do with that. Yeah. Um, yeah. Like, this is, the adjuster is kind of, like, being more precise. Yeah. And you can kind of, like, okay, so in advertisement, you know, there's, like, um, I don't know what you call it, but, like, different circles of, like, who you're targeting. Yeah. So, if you want it to be very specific, part of, like, the inner circle, it's a specific word. But the more general you are, the less, like, heard the inner circle would be, and the more wider you can reach. So, that's something, that's an implementation strategy. You can use something more specific and be like, okay, for example, this product, if we want to target the internal core of tech dads, then this is what they'll say. It's like, my daughter loves this new rainbow. And it's, like, more generic. It'll be, like, boy, boy, boy. Yeah. It's like, oh, enjoy this. Be safe at night. Yeah. And that would be, like, a different, different thing. This is so connected to linguistics, I feel like. Yeah. Yeah. So good. It's awesome. So how do we formalize positions of language? You can look it up. Yeah, there probably is. See, this is why we need the thing. We'll be like, how do you formalize positions? And it would tell us. Yeah. Yeah. On a mission. Wait can I get the transcript of this?
+[END PROMPT 4]
+[BEGIN BASELINE 4.1: ChatGPT]
+Three curious collaborators rapidly exploring an idea about AI systems that improve how humans describe things.
+The speakers appear intellectually playful and exploratory, bouncing ideas off one another with high energy and minimal hierarchy. Their conversation reflects a startup-style brainstorming vibe—fast, associative, and speculative. They repeatedly build on each other’s thoughts about AI agents that refine descriptions, personalize language, and adapt to social contexts. The tone suggests curiosity, openness, and intellectual excitement, with frequent interruptions and unfinished thoughts typical of creative ideation. References to linguistics, math models, advertising, and philosophy indicate analytical, interdisciplinary thinkers. The overall atmosphere feels like friends or collaborators spontaneously generating product concepts, enthusiastic about turning abstract language theory into practical tools.
+[END BASELINE 4.1: ChatGPT]
+[BEGIN PROMPT 5]
+Adele Shen
+1st degree connection 1st
+AI for Title Insurance | 2x TEDx speaker
+
+
+
+
+Wellesley Hills, Massachusetts, United States Contact info
+500+ connections
+
+
+
+
+
+
+Petros Hong, Mark Khrapko, and 5 other mutual connectionsPetros Hong, Mark Khrapko, and 5 other mutual connections
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AboutAbout
+Co-founder of Cranberry Tech (AI-native title insurance) and former co-founder of Remote Chess (Founders Inc., $70K pre-seed). Junior at Vanderbilt double-majoring in Human-Centered Technology Design and Cognitive Studies, minor in Scientific Computing. Background spans cybersecurity (Bitcoin wallet internship at 16), insurance, venture capital, and biotech. PAIR alumna (24 of 4,000+ applicants). Currently researching how insurance and liability mechanisms can shape AI safety. Interested in the emerging field of AI insurance.
+
+Co-founder of Cranberry Tech (AI-native title insurance) and former co-founder of Remote Chess (Founders Inc., $70K pre-seed). Junior at Vanderbilt double-majoring in Human-Centered Technology Design and Cognitive Studies, minor in Scientific Computing. Background spans cybersecurity (Bitcoin wallet internship at 16), insurance, venture capital, and biotech. PAIR alumna (24 of 4,000+ applicants). Currently researching how insurance and liability mechanisms can shape AI safety. Interested in the emerging field of AI insurance.
+ServicesServices
+Management Consulting • Project Management • Content Strategy • Content Marketing • Digital Marketing • Event PlanningManagement Consulting • Project Management • Content Strategy • Content Marketing • Digital Marketing • Event Planning
+
+
+
+
+
+Show all services
+ActivityActivity
+985 followers985 followers
+Loaded 6 Posts posts
+
+
+
+ Adele ShenAdele Shen • 1stVerified • 1st AI for Title Insurance | 2x TEDx speakerAI for Title Insurance | 2x TEDx speaker
+ View my services
+ 4d • 4 days ago • Visible to anyone on or off LinkedIn
+
+
+
+
+
+
+
+
+
+
+
+ I set out to fix how title agents work. Then I looked at my own inbox. 3,318 unread emails. 📬⚠️
+
+That was the moment I knew exactly what I needed to build.
+
+Title agents are closing multiple properties at once. Lenders, buyers, attorneys, underwriters... all communicating across platforms that were never designed to talk to each other.
+
+Just because a workflow depends on legacy systems doesn't mean the communication has to be just as fragmented.
+
+That's what Cranberry Tech is building. A secure, synced communication layer for title agents. We're starting with email, and that's just the beginning of solving this puzzle.
+
+If you're a title agent tired of the chaos, I'd love to show you what we're building.
+
+DM me or schedule a demo call: https://lnkd.in/g3h5p-rZ
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Adele ShenAdele Shen • 1stVerified • 1st AI for Title Insurance | 2x TEDx speakerAI for Title Insurance | 2x TEDx speaker
+ View my services
+ 5mo • 5 months ago • Visible to anyone on or off LinkedIn
+
+
+
+
+
+
+
+
+
+
+
+ doing nanotech at Vanderbilt University
+
+
+
+
+
+ 1/3
+ Activate to view larger image,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Show all posts
+ExperienceExperience
+Cranberry Tech. logo
+
+
+
+
+
+
+
+
+
+
+ Co-FounderCo-Founder
+
+
+
+ Cranberry Tech.Cranberry Tech. Oct 2025 - Present · 6 mosOct 2025 to Present · 6 mos
+
+
+
+
+
+
+
+
+
+
+
+
+
+ EntrepreneurEntrepreneur
+
+
+
+ Founders, Inc. · Full-timeFounders, Inc. · Full-time Jun 2025 - Aug 2025 · 3 mosJun 2025 to Aug 2025 · 3 mos San Francisco Bay AreaSan Francisco Bay Area
+
+
+
+
+
+
+
+
+
+
+
+
+
+ International Business Development ManagerInternational Business Development Manager
+
+
+
+ Digitalsalt Tech. · Full-timeDigitalsalt Tech. · Full-time Aug 2024 - May 2025 · 10 mosAug 2024 to May 2025 · 10 mos Nashville, Tennessee, United States · HybridNashville, Tennessee, United States · Hybrid
+
+
+
+
+
+International Business Strategy and Sales
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Research ScholarResearch Scholar
+
+
+
+ Pioneer Academics · ApprenticeshipPioneer Academics · Apprenticeship Jul 2022 - Jul 2024 · 2 yrs 1 moJul 2022 to Jul 2024 · 2 yrs 1 mo Oberlin, Ohio, United StatesOberlin, Ohio, United States
+
+
+
+• Completed 26-page research paper analyzing the relationship between film music and the Female Gaze
+• Only paper selected from the cohort "Music Form and Analysis"
+ • Connected the psychological theory of expectations with music and sociology• Completed 26-page research paper analyzing the relationship between film music and the Female Gaze • Only paper selected from the cohort "Music Form and Analysis" • Connected the psychological theory of expectations with music and sociology
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Guest SpeakerGuest Speaker
+
+
+
+ True Run Media (the Beijinger (EN/CN) | beijingkids | 菁kids (BJ/SH) · FreelanceTrue Run Media (the Beijinger (EN/CN) | beijingkids | 菁kids (BJ/SH) · Freelance Oct 2021 - Nov 2021 · 2 mosOct 2021 to Nov 2021 · 2 mos Shanghai, ChinaShanghai, China
+
+
+
+• invited as the student representative to share my experience as an IB Scholar with the scholarship application process.• invited as the student representative to share my experience as an IB Scholar with the scholarship application process.
+
+
+
+
+
+  
+
+
+
+Show all 6 experiences
+EducationEducation
+
+
+
+
+
+
+
+
+
+ Vanderbilt UniversityVanderbilt University
+
+
+
+ Bachelor's degree, Cognitive ScienceBachelor's degree, Cognitive Science May 2024 - May 2027May 2024 - May 2027
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Babson CollegeBabson College
+
+
+
+ Business ManagementBusiness Management Aug 2023 - May 2024Aug 2023 - May 2024
+
+
+
+Activities and societies: Presidential scholar, club volleyball, Undergraduate Consulting ProgramActivities and societies: Presidential scholar, club volleyball, Undergraduate Consulting Program
+
+
+
+
+
+
+
+Show all 4 educations
+SkillsSkills
+International Business StrategyInternational Business Strategy
+
+
+
+
+
+
+
+
+
+
+International Business Development Manager at Digitalsalt Tech.International Business Development Manager at Digitalsalt Tech.
+
+
+
+
+
+
+
+
+
+SalesSales
+
+
+
+
+
+
+
+
+
+
+International Business Development Manager at Digitalsalt Tech.International Business Development Manager at Digitalsalt Tech.
+
+
+
+
+
+
+
+
+
+Show all 10 skills
+CoursesCourses
+AP MicroeconomicsAP Microeconomics
+
+
+
+
+
+
+
+
+
+
+
+Associated with Shanghai High School International DivisionAssociated with Shanghai High School International Division
+
+
+
+
+
+
+AP World HistoryAP World History
+
+
+
+
+
+
+
+
+
+
+
+Associated with Shanghai High School International DivisionAssociated with Shanghai High School International Division
+
+
+
+
+
+
+Honors & awardsHonors & awards
+PwC consulting competition PwC consulting competition
+
+
+
+ Oct 2023Oct 2023
+
+
+
+
+
+
+
+Associated with Babson CollegeAssociated with Babson College
+
+
+
+
+
+
+Runner-up in PwC consulting competition, developing HR resources for demotivated employees in post-pandemic environment. Runner-up in PwC consulting competition, developing HR resources for demotivated employees in post-pandemic environment.
+
+
+
+
+
+Head of HouseHead of House
+
+
+
+ Oct 2021Oct 2021
+
+
+
+
+
+
+
+Associated with Wellington College International ShanghaiAssociated with Wellington College International Shanghai
+
+
+
+
+
+
+Show all 10 honors & awards
+LanguagesLanguages
+ChineseChinese
+
+
+
+ Native or bilingual proficiencyNative or bilingual proficiency
+
+
+
+
+
+EnglishEnglish
+
+
+
+ Native or bilingual proficiencyNative or bilingual proficiency
+
+
+
+
+
+Show all 4 languages
+OrganizationsOrganizations
+Wellington Photography FoundationWellington Photography Foundation
+
+
+
+ Founder · Oct 2021 - PresentFounder · Oct 2021 - Present
+
+
+
+
+
+
+
+Associated with Wellington College International ShanghaiAssociated with Wellington College International Shanghai
+
+
+
+
+
+
+My co-founder and I hold monthly photography contests for Wellington pupils from all age groups to join. We also hold biweekly workshops to teach other students photography skills. Themes include portrait, landscape, lifestyle, and more.My co-founder and I hold monthly photography contests for Wellington pupils from all age groups to join. We also hold biweekly workshops to teach other students photography skills. Themes include portrait, landscape, lifestyle, and more.
+
+
+
+
+
+EcoSocietyEcoSociety
+
+
+
+ Founder · Jan 2021 - PresentFounder · Jan 2021 - Present
+
+
+
+
+
+
+
+Associated with Wellington College International ShanghaiAssociated with Wellington College International Shanghai
+
+
+
+
+
+
+We collaborate with the Upper Prep to work on school-based environmental projects.
+DESCRIBE THIS PERSON’S PERSONALITY IN 100 WORDS.
+[END PROMPT 5]
+[BEGIN BASELINE 5.1: ChatGPT]
+Adele Shen appears highly driven, intellectually curious, and entrepreneurial, with a strong bias toward building solutions to complex systems problems.
+She demonstrates a personality characterized by:
+Systems-oriented thinking: Focus on fixing fragmented workflows (e.g., title insurance communication infrastructure).
+Entrepreneurial initiative: Multiple startups, venture exposure, and early technical work in cybersecurity.
+Intellectual breadth: Interests spanning AI safety, insurance mechanisms, cognitive science, and computing.
+High achievement orientation: Selective programs (PAIR), TEDx speaking, and competitive academic environments.
+Research curiosity: Engagement in interdisciplinary scholarship linking psychology, sociology, and music theory.
+Leadership tendency: Founding organizations, startups, and organizing communities.
+Global adaptability: Education and speaking across China and the U.S.
+Communication focus: Marketing, strategy, and public speaking integrated with technical interests.
+[END BASELINE 5.1: ChatGPT]
+[BEGIN PROMPT 6]
+Harrison Qian
+He/Him Add verification badge
+Student @ The Nueva School prev. at Orbit Engineering
+
+
+San Mateo, California, United States Contact info
+
+
+
+
+
+
+
+
+
+
+
+
+AnalyticsAnalytics
+Private to you Private to you
+224 profile views224 profile views
+
+
+
+ Discover who's viewed your profile.Discover who's viewed your profile.
+
+
+
+
+483 post impressions483 post impressions
+
+
+
+ Check out who's engaging with your posts.Check out who's engaging with your posts. Past 7 daysPast 7 days
+
+
+
+
+49 search appearances49 search appearances
+
+
+
+ See how often you appear in search results.See how often you appear in search results.
+
+
+
+
+Show all analytics
+AboutAbout
+I like knowledge, but also mindsets, perspectives, skills, self-mastery; all of these domains stack, resulting in exponentially better understanding of the world and myself
+say hi! i love talking to new peopleI like knowledge, but also mindsets, perspectives, skills, self-mastery; all of these domains stack, resulting in exponentially better understanding of the world and myself say hi! i love talking to new people
+ActivityActivity
+608 followers608 followers
+Create a post
+Loaded 9 Posts posts
+
+
+
+ Harrison QianHarrison Qian • YouYou Student @ The Nueva School prev. at Orbit EngineeringStudent @ The Nueva School prev. at Orbit Engineering 1w • 1 week ago • Visible to anyone on or off LinkedIn
+
+
+
+
+
+
+
+
+
+
+
+ i am presenting here!
+
+
+
+
+
+
+
+ 
+
+
+ The Nueva SchoolThe Nueva School 6,242 followers6,242 followers
+
+
+
+
+
+ At the Innovative Learning Conference 2026, we’re creating space for the conversations schools most need right now. This year’s keynote conversations are designed to challenge, connect, and inspire:
+
+💡 Fostering Intrinsic Motivation & Dignity for Young People
+We’re honored to welcome David Yeager, leading expert on adolescent development and author of the USA Today bestseller "10 to 25: The Science of Motivating Young People", in conversation with Rosalind Wiseman, author and educator (and a contributor to "10 to 25"! ), known for her work on social dynamics and youth culture. At ILC 2026 they’ll share the stage together—hear these collaborators explore how schools, families, and leaders can harness young people’s desire to be respected to spark motivation, connection, and cross-generational collaboration.
+
+💡 AI Ahead: Insights from Industry and Academia for Educators
+How should schools respond to rapid advances in AI? This session brings voices from both industry and academia into dialogue with educators to explore what’s ahead—and what thoughtful integration looks like.
+
+💡 Round Table Talks
+ILC attendees can also opt into round table talks, which are facilitated, small-group conversations on topics such as "Parenting the Anxious Generation", "Building power school trips", "Making student feedback meaningful", "Rethinking Assessment in the Age of AI", and many more.
+
+ 💡 “What I Wish My Teachers & Parents Knew”
+We’ll end by centering student voice with a closing student panel. Hear students speak candidly about their experiences and what truly supports their growth.
+
+ILC brings together educators, parents, and school administrators for meaningful dialogue about the future of learning. We hope you’ll join us for the full conference experience. For those with tighter schedules, a new one-day Thursday or Friday pass is available by request (email ilc@nuevaschool.org).
+
+Learn more and register: https://lnkd.in/dzFtvTcb
+
+hashtag#InnovativeLearning hashtag#EducationLeadership hashtag#AIinEducation hashtag#StudentVoice hashtag#ParentPartnership hashtag#Education hashtag#Teaching
+
+
+
+
+
+
+ Activate to view larger image,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Harrison QianHarrison Qian • YouYou Student @ The Nueva School prev. at Orbit EngineeringStudent @ The Nueva School prev. at Orbit Engineering 1w • 1 week ago • Visible to anyone on or off LinkedIn
+
+
+
+
+
+
+
+
+
+
+
+ ^
+they previously did [duct-tape.build] as well; goats
+
+
+
+
+
+
+
+ 
+
+
+ Mark KhrapkoMark Khrapko • 1stVerified • 1st Cofounder @ OrbitCofounder @ Orbit
+
+
+
+
+
+ We're giving away $100k to brilliant builders, scientists, and operators. No strings attached.
+
+Last year my friends and I pooled money to back people doing extraordinary work. It was one of the best things we did all year. We had to do it again, bigger.
+
+Announcing the Eigenprize. 10-minute application. We read every single one.
+
+Link in comments.
+
+
+
+
+
+
+ Activate to view larger image,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Show all posts
+ExperienceExperience
+Founding Engineer
+
+
+
+
+
+
+
+
+
+
+ Founding EngineerFounding Engineer
+
+
+
+ WorkableCafes.com · Part-timeWorkableCafes.com · Part-time Oct 2025 - Nov 2025 · 2 mosOct 2025 to Nov 2025 · 2 mos San Francisco Bay Area · RemoteSan Francisco Bay Area · Remote
+
+
+
+front end mantenance (bugs, cleaning up display) and acquired data for the validation of rated cafes
+workablecafes.comfront end mantenance (bugs, cleaning up display) and acquired data for the validation of rated cafes workablecafes.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Summer InternSummer Intern
+
+
+
+ Orbit Inc. · Full-timeOrbit Inc. · Full-time Jul 2025 - Aug 2025 · 2 mosJul 2025 to Aug 2025 · 2 mos Boston, Massachusetts, United States · On-siteBoston, Massachusetts, United States · On-site
+
+
+
+reading literature, designing tests, collecting eeg & other data, analyzing data, repeat
+(using gvs and cvs to make magical things)reading literature, designing tests, collecting eeg & other data, analyzing data, repeat (using gvs and cvs to make magical things)
+
+
+
+
+
+Camp Counselor
+
+
+
+
+
+
+
+
+
+
+ Camp CounselorCamp Counselor
+
+
+
+ Math in the Mountains · Full-timeMath in the Mountains · Full-time Jun 2025 - Jul 2025 · 2 mosJun 2025 to Jul 2025 · 2 mos Jackson, Wyoming, United States · On-siteJackson, Wyoming, United States · On-site
+
+
+
+working with children, growing their curiosities in math, ensuring their safety, being a role modelworking with children, growing their curiosities in math, ensuring their safety, being a role model
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Summer InternSummer Intern
+
+
+
+ The Atticus Project · Full-timeThe Atticus Project · Full-time Jun 2025 - Jun 2025 · 1 moJun 2025 to Jun 2025 · 1 mo San Mateo, California, United States · On-siteSan Mateo, California, United States · On-site
+
+
+
+developed parts of a large legal dataset: found clauses in ai regulations, scored companies' tos and privacy policy according to the regulations, wrote automation code for the creation, distribution, and collection of google formsdeveloped parts of a large legal dataset: found clauses in ai regulations, scored companies' tos and privacy policy according to the regulations, wrote automation code for the creation, distribution, and collection of google forms
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ InstructorInstructor
+
+
+
+ Mathnasium of Redwood City · Part-timeMathnasium of Redwood City · Part-time Aug 2024 - May 2025 · 10 mosAug 2024 to May 2025 · 10 mos Redwood City, California, United States · On-siteRedwood City, California, United States · On-site
+
+
+
+assisting students with math coursework (middle school through high school) and patiently guiding them through crucial math conceptsassisting students with math coursework (middle school through high school) and patiently guiding them through crucial math concepts
+
+
+
+
+
+EducationEducation
+
+
+
+
+
+
+
+
+
+ The Nueva SchoolThe Nueva School
+
+
+
+ Aug 2019 - Jun 2027Aug 2019 - Jun 2027
+
+
+
+Grade: 11Grade: 11
+
+
+
+
+
+
+
+Activities and societies: Math Club, Chess Club, Ultimate Frisbee, Tennis, Peer TutoringActivities and societies: Math Club, Chess Club, Ultimate Frisbee, Tennis, Peer Tutoring
+
+
+
+
+
+
+
+ProjectsProjects
+sketch generation & classificationsketch generation & classification
+
+
+
+ Aug 2024 - Apr 2025Aug 2024 - Apr 2025
+
+
+
+
+spent a year developing models to classify and generate sketches
+classifcation (CNN) reached 92% accuracy on 95 classes (class filtering, efficient model design)
+generation (RNN VAE -> gaussian mixture model) generated very good sketchesspent a year developing models to classify and generate sketches classifcation (CNN) reached 92% accuracy on 95 classes (class filtering, efficient model design) generation (RNN VAE -> gaussian mixture model) generated very good sketches
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+
+
+
+
+machine translation explorationmachine translation exploration
+
+
+
+ Aug 2024 - Oct 2024Aug 2024 - Oct 2024
+
+
+
+
+spent a month doing extensive research on machine translation, presented at school. dictionary, rule-based, statistical, deep learning, and transformer methods. in the middle, also spent a couple of weeks exploring and understanding different models for text generation, including LSTM, GRU, markov chains.spent a month doing extensive research on machine translation, presented at school. dictionary, rule-based, statistical, deep learning, and transformer methods. in the middle, also spent a couple of weeks exploring and understanding different models for text generation, including LSTM, GRU, markov chains.
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+Show all 8 projects
+Honors & awardsHonors & awards
+2nd Place Nationally2nd Place Nationally
+
+
+
+ Issued by USAYPT · Feb 2026Issued by USAYPT · Feb 2026
+
+
+
+
+
+
+
+Associated with The Nueva SchoolAssociated with The Nueva School
+
+
+
+
+
+
+Worked on the eddy currents problem as a scoutWorked on the eddy currents problem as a scout
+
+
+
+
+
+
+
+
+
+ certificate.pdfcertificate.pdf
+
+
+
+
+Meritorious (top 10%)Meritorious (top 10%)
+
+
+
+ Issued by COMAP · Jan 2026Issued by COMAP · Jan 2026
+
+
+
+
+Worked for two weeks on a math modeling solution using spectral bisection algorithms, cellular automata, and graph traversal to optimize firefighter sweeping routes in buildings.
+DESCRIBE THIS PERSON’S PERSONALITY IN 100 WORDS.
+[END PROMPT 6]
+[BEGIN BASELINE 6.1: ChatGPT]
+Curious, intellectually ambitious, builder-oriented, and socially open.
+This person appears highly curiosity-driven and intrinsically motivated, with a strong orientation toward learning across domains (math, AI, neuroscience, data analysis). Their activities suggest a builder mindset: experimenting, implementing models, reading literature, and running empirical tests. They likely value self-improvement and intellectual stacking, explicitly emphasizing mindsets, perspectives, and skills compounding into deeper understanding.
+The profile also signals initiative and independence (founding engineer role, research internships, projects). Participation in teaching and mentoring roles indicates patience and pro-social tendencies. Public posts and invitations to connect suggest openness and intellectual sociability.
+Overall personality: analytical, exploratory, ambitious, collaborative, and growth-oriented.
+[END BASELINE 6.1: ChatGPT]

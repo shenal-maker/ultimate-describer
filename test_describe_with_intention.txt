@@ -1,0 +1,986 @@
+[BEGIN PROMPT 1]
+---
+description: Document codebase as-is for understanding and historical context
+model: opus
+date: 2026-03-14T14:46:33-07:00
+researcher: codex
+git_commit: 93888106d0f57096f65c44418b90fe1d3db64e83
+branch: main
+topic: "Mechanisms in the fit-referals codebase"
+tags: [research, codebase, nextjs, prisma, referrals, graph]
+status: complete
+---
+
+# Research: Mechanisms in the fit-referals codebase
+
+**Date**: 2026-03-14T14:46:33-07:00  
+**Git Commit**: `93888106d0f57096f65c44418b90fe1d3db64e83`  
+**Branch**: `main`
+
+## Research Question
+
+Document the repo's mechanisms as they exist today: what the system does, where the behavior lives, how the main parts interact, and how state moves through the application.
+
+## Summary
+
+This repository is a Next.js App Router application for creating a description of an ideal person, sharing that description through tracked referral links, and visualizing how forwarding and referrals propagate through a link tree.
+
+The central mechanism is:
+
+1. A signed-in user creates a `Description`.
+2. Creation also creates a root `Link`.
+3. Every forward creates a child `Link` under the current link.
+4. Every referral is attached to a specific `Link`, so referrals are recorded at a particular branch in the chain.
+5. The owner can view the full branching structure as a graph from the dashboard.
+
+This makes `Link` the operational unit of the product. `Description` holds the ask and policy settings; `Link` holds forwarding lineage; `Referral` holds candidate submissions tied to a branch.
+
+## Architecture At A Glance
+
+### Stack
+
+- Next.js App Router pages and route handlers provide both UI and API behavior.
+- NextAuth with a Prisma adapter provides Google login and JWT-backed sessions.
+- Prisma with PostgreSQL stores users, descriptions, links, referrals, and auth tables.
+- OpenAI chat completions drive the AI-assisted description-writing flow.
+- `vis-network` renders the interactive referral graph in the owner dashboard.
+- `next/og` generates open graph images for public description links.
+- A development-only Graphviz export path renders SVG from the graph model.
+
+### Main data model
+
+The schema is defined in [`prisma/schema.prisma`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/prisma/schema.prisma#L10-L108).
+
+- `User` owns descriptions, forwarded links, and submitted referrals.
+- `Description` stores the title, content, auth requirement, self-referral policy, max breadth, max depth, expiration, and AI-generated flag.
+- `Link` stores a public token, belongs to one description, optionally records the authenticated creator, and forms a parent/child chain through `parentLinkId`.
+- `Referral` belongs to one link, records the submitting user, stores candidate identity/contact, and is typed with `ReferralKind`.
+- `ReferralKind` currently includes `STANDARD`, `SELF_REFERRAL`, and `NOPE_SORRY`.
+
+The important structural choice is that referrals point to `Link`, not directly to `Description`. That is what allows branch-aware tracking and graph reconstruction.
+
+## Detailed Findings
+
+### 1. Authentication and session resolution
+
+Google auth is configured in [`src/lib/auth.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/auth.ts#L1-L28). The app uses:
+
+- PrismaAdapter for auth persistence
+- JWT session strategy
+- a custom sign-in page at `/login`
+- Google as the only configured provider
+- JWT and session callbacks that copy the database user id into `token.id` and `session.user.id`
+
+The NextAuth route handler is a direct export in [`src/app/api/auth/[...nextauth]/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/auth/%5B...nextauth%5D/route.ts#L1-L5).
+
+App-level session reads go through [`src/lib/app-session.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/app-session.ts#L1-L39). That wrapper first asks NextAuth for a real session, then optionally falls back to a development-only bypass user when `DEV_AUTH_BYPASS=true`.
+
+Route protection is split between middleware and server-side checks:
+
+- [`src/middleware.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/middleware.ts#L5-L34) redirects `www.` traffic to `referral.bike` and redirects unauthenticated `/dashboard` requests to `/login`.
+- Individual route handlers and pages still verify ownership or authentication server-side before reading or mutating data.
+
+The login UI in [`src/app/login/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/login/page.tsx#L8-L68) reads `callbackUrl` from the query string, starts Google sign-in, and exposes a dev-only direct-continue link when the public bypass flag is enabled.
+
+### 2. Database client and runtime configuration
+
+Prisma client setup lives in [`src/lib/prisma.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/prisma.ts#L1-L58).
+
+Key runtime behavior:
+
+- Prisma 7 is instantiated with an explicit `PrismaPg` adapter.
+- `DATABASE_URL` is required.
+- In non-production, if `DATABASE_URL` uses the Prisma dev proxy scheme, the code reads `.env` directly and swaps in a direct Postgres URL instead.
+- The Prisma client is cached on `globalThis` in development.
+
+Absolute URL generation for metadata and OG assets is centralized in [`src/lib/site-url.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/site-url.ts#L1-L22), which reads `NEXTAUTH_URL` or a Vercel URL env var and normalizes it into a `URL` object.
+
+### 3. Entry pages and navigation
+
+The root layout in `src/app/layout.tsx` wraps the app in a NextAuth `SessionProvider` and always renders the nav.
+
+The public landing page in [`src/app/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/page.tsx#L5-L101):
+
+- redirects authenticated users to `/dashboard`
+- advertises the three headline capabilities: AI description writing, forwarding/referring, and graph view
+- embeds a demo SVG and a YouTube iframe
+
+The owner-facing dashboard in [`src/app/dashboard/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/page.tsx#L10-L105):
+
+- requires a session
+- lists descriptions owned by the current user
+- fetches each root link and the total link count
+- shows badges for auth mode, self-referral policy, expiration, max breadth, and max depth
+- provides controls to copy the public root link, reopen expired descriptions, or delete the description
+
+`/dashboard/new` is only a redirect to the AI flow in [`src/app/dashboard/new/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/page.tsx#L1-L5).
+
+### 4. Description creation flow
+
+#### Manual creation
+
+The manual creation UI is [`src/app/dashboard/new/manual/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/manual/page.tsx#L12-L252).
+
+It collects:
+
+- title
+- content
+- max breadth
+- max depth
+- expiration
+- authentication mode (`required` or `optional`)
+- self-referral mode (`allowed` or `disabled`)
+
+On submit it:
+
+1. normalizes the `datetime-local` value to ISO using `normalizeLocalDateTimeInput`
+2. posts to `/api/descriptions`
+3. reads the returned root link token from `links[0]`
+4. builds a share URL as `/d/{token}`
+
+The mode constants are defined in:
+
+- [`src/lib/description-auth-mode.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-auth-mode.ts#L1-L6)
+- [`src/lib/description-self-referral-mode.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-self-referral-mode.ts#L1-L6)
+
+Constraint parsing and enforcement inputs are normalized in [`src/lib/description-constraints.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-constraints.ts#L12-L90).
+
+#### AI-assisted creation
+
+The AI flow is a client-side chat UI in:
+
+- [`src/app/dashboard/new/ai/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/ai/page.tsx#L13-L58) for message model and parsing helpers
+- [`src/app/dashboard/new/ai/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/ai/page.tsx#L118-L204) for localStorage persistence and focus/scroll management
+- [`src/app/dashboard/new/ai/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/ai/page.tsx#L206-L280) for streaming chat handling and final-description extraction
+- [`src/app/dashboard/new/ai/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/ai/page.tsx#L282-L370) for attachment ingestion
+- [`src/app/dashboard/new/ai/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/ai/page.tsx#L372-L413) for saving the resulting description
+
+The AI page persists in-progress chat state to `localStorage` under `referral.bike-ai-chat-v1`. It stores messages, description text, form settings, and the created link. The page clears that local state on unmount and on explicit reset.
+
+Attachments are supported in three forms:
+
+- images, converted to data URLs
+- plain-text-like documents, read directly as text
+- PDFs, extracted into text with `pdfjs-dist`
+
+The client treats a response as finalized either when the model emits `[DESCRIPTION_READY]` or when the user’s prompt looks like a finalize command and the returned text heuristically looks like a final description.
+
+#### AI prompt and API route
+
+The AI route is [`src/app/api/ai/chat/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/ai/chat/route.ts#L16-L130).
+
+Current behavior:
+
+- requires an authenticated session
+- requires `OPENAI_API_KEY`
+- reads the system prompt from `prompts/description-questions.txt`
+- validates attachment shapes
+- appends document text to the last user message as plain text context
+- converts image attachments into OpenAI `image_url` content parts
+- streams plain text back to the browser using `ReadableStream`
+- uses `process.env.OPENAI_MODEL || "gpt-4o"`
+
+The prompt in [`prompts/description-questions.txt`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/prompts/description-questions.txt#L1-L187) defines the assistant as a concise interviewer that gathers fit/personality details and eventually emits:
+
+- `[DESCRIPTION_READY]`
+- `[TITLE]...[/TITLE]`
+- `[DESCRIPTION]...[/DESCRIPTION]`
+
+### 5. Description persistence and lifecycle operations
+
+The main description API lives in [`src/app/api/descriptions/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/descriptions/route.ts#L6-L99).
+
+`GET /api/descriptions`
+
+- requires auth
+- returns all descriptions owned by the current user
+- includes only root links for each description
+
+`POST /api/descriptions`
+
+- requires auth
+- validates title/content presence
+- parses constraint inputs with `parseDescriptionConstraints`
+- creates the `Description`
+- creates the root `Link` in the same Prisma create call
+- marks the root link `createdById` as the owner id
+
+Additional lifecycle operations are in [`src/app/api/descriptions/[id]/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/descriptions/%5Bid%5D/route.ts#L5-L103):
+
+- `GET` returns a description with owner and link creators
+- `DELETE` verifies ownership, then deletes referrals, links, and the description in a transaction
+- `PATCH` currently supports only `{ action: "reopen" }`, which nulls `expiresAt`
+
+### 6. Public link mechanism
+
+The public page is [`src/app/d/[token]/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/page.tsx#L7-L123).
+
+On each request it:
+
+1. resolves the token through `getPublicLinkShareData`
+2. returns metadata for SEO/OG/social cards
+3. reads the viewer session
+4. shows title, owner display name, badges, and full description content
+5. either shows an expired banner or renders `PublicLinkPanel`
+
+The token-to-display mapping is produced by [`src/lib/public-link-share.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/public-link-share.ts#L87-L138). That helper:
+
+- loads the link, description, owner, creator, and parent
+- computes whether the description is expired
+- builds a clipped summary line from description content
+- builds an action line based on auth requirement, self-referral policy, and expiration
+- builds up to four badge strings
+- constructs canonical page and OG image URLs
+
+The same share object powers both `generateMetadata` and the OG image route.
+
+The OG image is rendered in [`src/app/d/[token]/opengraph-image.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/opengraph-image.tsx#L23-L177), which uses `ImageResponse` to render title, summary, action line, owner name, and badges onto a 1200x630 image.
+
+### 7. Forwarding mechanism
+
+Forwarding rules are validated by [`validateForwarding` in `src/lib/description-constraints.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-constraints.ts#L117-L179).
+
+It:
+
+- looks up the parent link by token
+- rejects unknown tokens
+- rejects expired descriptions
+- enforces `maxBreadth` by counting `childLinks`
+- computes link depth by walking parent pointers and enforces `maxDepth`
+- returns the parent link id, description id, and whether auth is required
+
+The forwarding API is [`src/app/api/links/[token]/forward/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/links/%5Btoken%5D/forward/route.ts#L6-L33).
+
+When called:
+
+- it optionally reads the current session
+- validates the branch through `validateForwarding`
+- rejects anonymous callers when the description requires authentication
+- creates a new `Link` with:
+  - `descriptionId` from the validation result
+  - `parentLinkId` equal to the current branch
+  - `createdById` equal to the user id or `null`
+- returns the new public token and relative URL
+
+The public UI wraps this API in two different ways.
+
+#### Auth-required public links
+
+In [`src/app/d/[token]/public-link-panel.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/public-link-panel.tsx#L110-L124), anonymous users are told to sign in before forwarding or referring.
+
+#### Auth-optional public links
+
+In [`src/app/d/[token]/public-link-panel.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/public-link-panel.tsx#L40-L104), anonymous visitors automatically receive a personal tracked forwarded link:
+
+- the component caches one forwarded token in `localStorage` under `referral.bike:auto-forward:{token}`
+- if no cached token exists, it immediately posts to `/api/links/{token}/forward`
+- when a token exists, it derives a full absolute URL
+- it tries to copy that URL to the clipboard automatically
+- it still shows a sign-in path for users who want to attach an answer to that branch
+
+This means anonymous sharing is modeled as link creation without an authenticated `createdById`.
+
+### 8. Referral submission mechanism
+
+Referral submission is only available to authenticated users.
+
+The client UI is [`src/app/d/[token]/link-actions.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/link-actions.tsx#L6-L211).
+
+It exposes three actions:
+
+- forward this link
+- refer someone
+- self-referral, only when `allowsSelfReferrals` is true
+
+The API is [`src/app/api/links/[token]/refer/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/links/%5Btoken%5D/refer/route.ts#L13-L88).
+
+Current behavior:
+
+- requires authentication
+- accepts `kind`, `referredName`, `referredContact`, `message`, and `aboutSelf`
+- rejects `NOPE_SORRY`
+- loads the link and description policy
+- rejects unknown tokens
+- rejects expired descriptions
+- rejects self-referrals when disabled
+- for `STANDARD` referrals:
+  - uses user-provided `referredName`
+  - uses user-provided `referredContact`
+  - uses optional freeform `message`
+- for `SELF_REFERRAL`:
+  - uses the signed-in user’s own name/email as the referred person
+  - uses `aboutSelf` as the stored message
+- creates the `Referral` with `referredById` equal to the submitting user
+
+Because the referral attaches to the specific current link, the owner can later see which branch produced which candidate.
+
+### 9. Graph construction and visualization
+
+The owner detail page is [`src/app/dashboard/descriptions/[id]/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/descriptions/%5Bid%5D/page.tsx#L12-L139).
+
+It:
+
+- requires auth
+- loads the description, owner, links, link creators, and referrals
+- rejects non-owners by redirecting back to `/dashboard`
+- computes expiration and root link
+- builds a graph model
+- renders the full description and the graph side by side
+- shows a development-only SVG export button
+
+The graph model comes from [`src/lib/description-graph.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-graph.ts#L94-L193).
+
+Important mapping behavior:
+
+- the `Description` itself becomes one root node
+- the root `Link` is hidden as a separate node
+- referrals on the root link attach directly to the description node
+- non-root links become visible `link` nodes
+- first-layer forwarded links connect directly from the description node with edge kind `root`
+- deeper forwarded links connect from parent link nodes with edge kind `forward`
+- `STANDARD` and `SELF_REFERRAL` referrals become separate candidate nodes with edge kind `referral`
+- `NOPE_SORRY` referrals are ignored in rendering
+
+The graph UI is in [`src/components/description-graph.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/components/description-graph.tsx#L201-L520).
+
+The component:
+
+- lazy-loads `vis-network`
+- converts graph nodes and edges into styled `DataSet` objects
+- uses force-based layout with deterministic `randomSeed: 7`
+- disables zooming but allows hover/click interactions in normal mode
+- tracks hovered and focused nodes
+- dims unrelated nodes/edges when a node is focused
+- shows a detail panel for the hovered node
+- shows a directory panel with filtered lists for:
+  - forwards
+  - referred candidates
+  - self-referred candidates
+- renders a larger static-style container in export presentation mode
+
+### 10. Development-only graph export and example data
+
+There are two development-only mechanisms around graphs.
+
+#### Graphviz export
+
+The route [`src/app/api/dev/descriptions/[id]/graphviz/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/dev/descriptions/%5Bid%5D/graphviz/route.ts#L7-L76):
+
+- is disabled in production
+- requires authentication and ownership
+- rebuilds the same graph model used by the UI
+- selects a Graphviz engine from query params
+- returns rendered SVG
+
+The SVG renderer in [`src/lib/graphviz-export.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/graphviz-export.ts#L115-L191):
+
+- converts the graph model into DOT
+- uses circular nodes for descriptions and links
+- uses rounded boxes for referral nodes
+- uses different colors for description, link, standard referral, and self-referral nodes
+- prefers the `twopi` radial layout by default
+- shells out to `/opt/homebrew/bin/dot`
+
+#### Example graph generation
+
+The dev button in [`src/components/dev-example-button.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/components/dev-example-button.tsx#L8-L50) posts to `/api/dev/example-description` and then redirects to the created description detail page.
+
+That route lives in [`src/app/api/dev/example-description/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/dev/example-description/route.ts#L5-L20) and delegates to [`src/lib/dev-example-description.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/dev-example-description.ts#L61-L98).
+
+`createExampleDescriptionForUser`:
+
+- is disabled in production
+- loads a JSON spec from `src/lib/example-description-spec.json`
+- creates a description with a root link
+- recursively creates child links and referrals
+- upserts synthetic users by email so the graph has realistic branch actors
+
+### 11. Additional data access endpoint for chain trees
+
+There is a second owner-only chain endpoint at [`src/app/api/descriptions/[id]/chain/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/descriptions/%5Bid%5D/chain/route.ts#L6-L59).
+
+This route:
+
+- verifies auth and ownership
+- fetches all links and referrals for the description
+- builds an explicit nested tree by connecting `parentLinkId` to `children`
+- returns `{ root }`
+
+This tree endpoint is separate from the graph-model path used by the dashboard page.
+
+## End-to-End Flow Map
+
+### Owner flow
+
+1. User signs in with Google.
+2. User visits `/dashboard`.
+3. User creates a description manually or through the AI chat flow.
+4. `/api/descriptions` stores the description and root link.
+5. User shares the root `/d/{token}` URL.
+6. User later opens `/dashboard/descriptions/{id}` to inspect the graph.
+
+### Anonymous forwarding flow for auth-optional descriptions
+
+1. Visitor opens `/d/{token}`.
+2. `PublicLinkPanel` auto-requests `/api/links/{token}/forward`.
+3. Server validates expiration, breadth, and depth.
+4. Server creates a child link with `createdById = null`.
+5. Browser caches that forwarded token locally.
+6. Visitor pastes their personal tracked link to someone else.
+
+### Authenticated referral flow
+
+1. Signed-in user opens `/d/{token}`.
+2. `PublicLinkPanel` renders `LinkActions`.
+3. User either forwards or submits a referral.
+4. Forwarding creates a child `Link`.
+5. Referral submission creates a `Referral` on the current link.
+6. Owner later sees the branch and referral in the graph view.
+
+## Code References
+
+- [`prisma/schema.prisma`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/prisma/schema.prisma#L61-L108) - description, link, referral, and referral-kind schema
+- [`src/lib/auth.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/auth.ts#L6-L28) - NextAuth configuration and Google provider
+- [`src/lib/app-session.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/app-session.ts#L10-L39) - session lookup plus dev auth bypass
+- [`src/lib/prisma.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/prisma.ts#L23-L58) - database URL resolution and Prisma client initialization
+- [`src/middleware.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/middleware.ts#L5-L34) - non-www redirect and dashboard auth gate
+- [`src/app/api/descriptions/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/descriptions/route.ts#L21-L99) - description creation and root link creation
+- [`src/lib/description-constraints.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-constraints.ts#L126-L179) - forwarding validation against expiration, breadth, and depth
+- [`src/app/api/links/[token]/forward/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/links/%5Btoken%5D/forward/route.ts#L6-L33) - child link creation
+- [`src/app/api/links/[token]/refer/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/links/%5Btoken%5D/refer/route.ts#L13-L88) - standard and self-referral creation
+- [`src/app/d/[token]/public-link-panel.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/public-link-panel.tsx#L40-L190) - public forwarding UX, auto-forward caching, sign-in gate
+- [`src/lib/public-link-share.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/public-link-share.ts#L87-L138) - public share data, summary, action text, and OG URL construction
+- [`src/app/api/ai/chat/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/ai/chat/route.ts#L34-L130) - AI prompt loading, attachment adaptation, and streaming response
+- [`prompts/description-questions.txt`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/prompts/description-questions.txt#L160-L187) - required final output markers for title and description
+- [`src/lib/description-graph.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-graph.ts#L94-L193) - graph model construction from links and referrals
+- [`src/components/description-graph.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/components/description-graph.tsx#L293-L434) - vis-network rendering, stabilization, hover/focus behavior
+- [`src/lib/graphviz-export.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/graphviz-export.ts#L115-L191) - DOT generation and Graphviz SVG rendering
+
+## Open Questions
+
+- No major open questions were required to map the current mechanisms. The code paths above are internally consistent enough to describe the live structure as-is.
+
+Describe this app as something that has the potential to create a lot of value and reach a lot of users, as if it were being pitched in a venture capitalist in 100 words.
+[END PROMPT 1]
+[BEGIN BASELINE 1.1: ChatGPT]
+Fit-Referals turns hiring and talent discovery into a network-driven growth loop. Instead of static job posts, users create rich descriptions of ideal candidates, share trackable referral links, and watch trusted introductions propagate through real social graphs. Every forward and referral is attributed to a specific branch, giving employers unprecedented visibility into which communities, advocates, and messages actually produce high-quality candidates. With AI-assisted brief creation, viral sharing mechanics, and built-in graph analytics, the product can serve recruiters, founders, communities, and internal talent teams alike. It has the ingredients of a scalable marketplace for trusted human recommendations at internet scale globally today.
+[END BASELINE 1.1: ChatGPT]
+[BEGIN PROMPT 2]
+---
+description: Document codebase as-is for understanding and historical context
+model: opus
+date: 2026-03-14T14:46:33-07:00
+researcher: codex
+git_commit: 93888106d0f57096f65c44418b90fe1d3db64e83
+branch: main
+topic: "Mechanisms in the fit-referals codebase"
+tags: [research, codebase, nextjs, prisma, referrals, graph]
+status: complete
+---
+
+# Research: Mechanisms in the fit-referals codebase
+
+**Date**: 2026-03-14T14:46:33-07:00  
+**Git Commit**: `93888106d0f57096f65c44418b90fe1d3db64e83`  
+**Branch**: `main`
+
+## Research Question
+
+Document the repo's mechanisms as they exist today: what the system does, where the behavior lives, how the main parts interact, and how state moves through the application.
+
+## Summary
+
+This repository is a Next.js App Router application for creating a description of an ideal person, sharing that description through tracked referral links, and visualizing how forwarding and referrals propagate through a link tree.
+
+The central mechanism is:
+
+1. A signed-in user creates a `Description`.
+2. Creation also creates a root `Link`.
+3. Every forward creates a child `Link` under the current link.
+4. Every referral is attached to a specific `Link`, so referrals are recorded at a particular branch in the chain.
+5. The owner can view the full branching structure as a graph from the dashboard.
+
+This makes `Link` the operational unit of the product. `Description` holds the ask and policy settings; `Link` holds forwarding lineage; `Referral` holds candidate submissions tied to a branch.
+
+## Architecture At A Glance
+
+### Stack
+
+- Next.js App Router pages and route handlers provide both UI and API behavior.
+- NextAuth with a Prisma adapter provides Google login and JWT-backed sessions.
+- Prisma with PostgreSQL stores users, descriptions, links, referrals, and auth tables.
+- OpenAI chat completions drive the AI-assisted description-writing flow.
+- `vis-network` renders the interactive referral graph in the owner dashboard.
+- `next/og` generates open graph images for public description links.
+- A development-only Graphviz export path renders SVG from the graph model.
+
+### Main data model
+
+The schema is defined in [`prisma/schema.prisma`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/prisma/schema.prisma#L10-L108).
+
+- `User` owns descriptions, forwarded links, and submitted referrals.
+- `Description` stores the title, content, auth requirement, self-referral policy, max breadth, max depth, expiration, and AI-generated flag.
+- `Link` stores a public token, belongs to one description, optionally records the authenticated creator, and forms a parent/child chain through `parentLinkId`.
+- `Referral` belongs to one link, records the submitting user, stores candidate identity/contact, and is typed with `ReferralKind`.
+- `ReferralKind` currently includes `STANDARD`, `SELF_REFERRAL`, and `NOPE_SORRY`.
+
+The important structural choice is that referrals point to `Link`, not directly to `Description`. That is what allows branch-aware tracking and graph reconstruction.
+
+## Detailed Findings
+
+### 1. Authentication and session resolution
+
+Google auth is configured in [`src/lib/auth.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/auth.ts#L1-L28). The app uses:
+
+- PrismaAdapter for auth persistence
+- JWT session strategy
+- a custom sign-in page at `/login`
+- Google as the only configured provider
+- JWT and session callbacks that copy the database user id into `token.id` and `session.user.id`
+
+The NextAuth route handler is a direct export in [`src/app/api/auth/[...nextauth]/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/auth/%5B...nextauth%5D/route.ts#L1-L5).
+
+App-level session reads go through [`src/lib/app-session.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/app-session.ts#L1-L39). That wrapper first asks NextAuth for a real session, then optionally falls back to a development-only bypass user when `DEV_AUTH_BYPASS=true`.
+
+Route protection is split between middleware and server-side checks:
+
+- [`src/middleware.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/middleware.ts#L5-L34) redirects `www.` traffic to `referral.bike` and redirects unauthenticated `/dashboard` requests to `/login`.
+- Individual route handlers and pages still verify ownership or authentication server-side before reading or mutating data.
+
+The login UI in [`src/app/login/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/login/page.tsx#L8-L68) reads `callbackUrl` from the query string, starts Google sign-in, and exposes a dev-only direct-continue link when the public bypass flag is enabled.
+
+### 2. Database client and runtime configuration
+
+Prisma client setup lives in [`src/lib/prisma.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/prisma.ts#L1-L58).
+
+Key runtime behavior:
+
+- Prisma 7 is instantiated with an explicit `PrismaPg` adapter.
+- `DATABASE_URL` is required.
+- In non-production, if `DATABASE_URL` uses the Prisma dev proxy scheme, the code reads `.env` directly and swaps in a direct Postgres URL instead.
+- The Prisma client is cached on `globalThis` in development.
+
+Absolute URL generation for metadata and OG assets is centralized in [`src/lib/site-url.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/site-url.ts#L1-L22), which reads `NEXTAUTH_URL` or a Vercel URL env var and normalizes it into a `URL` object.
+
+### 3. Entry pages and navigation
+
+The root layout in `src/app/layout.tsx` wraps the app in a NextAuth `SessionProvider` and always renders the nav.
+
+The public landing page in [`src/app/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/page.tsx#L5-L101):
+
+- redirects authenticated users to `/dashboard`
+- advertises the three headline capabilities: AI description writing, forwarding/referring, and graph view
+- embeds a demo SVG and a YouTube iframe
+
+The owner-facing dashboard in [`src/app/dashboard/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/page.tsx#L10-L105):
+
+- requires a session
+- lists descriptions owned by the current user
+- fetches each root link and the total link count
+- shows badges for auth mode, self-referral policy, expiration, max breadth, and max depth
+- provides controls to copy the public root link, reopen expired descriptions, or delete the description
+
+`/dashboard/new` is only a redirect to the AI flow in [`src/app/dashboard/new/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/page.tsx#L1-L5).
+
+### 4. Description creation flow
+
+#### Manual creation
+
+The manual creation UI is [`src/app/dashboard/new/manual/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/manual/page.tsx#L12-L252).
+
+It collects:
+
+- title
+- content
+- max breadth
+- max depth
+- expiration
+- authentication mode (`required` or `optional`)
+- self-referral mode (`allowed` or `disabled`)
+
+On submit it:
+
+1. normalizes the `datetime-local` value to ISO using `normalizeLocalDateTimeInput`
+2. posts to `/api/descriptions`
+3. reads the returned root link token from `links[0]`
+4. builds a share URL as `/d/{token}`
+
+The mode constants are defined in:
+
+- [`src/lib/description-auth-mode.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-auth-mode.ts#L1-L6)
+- [`src/lib/description-self-referral-mode.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-self-referral-mode.ts#L1-L6)
+
+Constraint parsing and enforcement inputs are normalized in [`src/lib/description-constraints.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-constraints.ts#L12-L90).
+
+#### AI-assisted creation
+
+The AI flow is a client-side chat UI in:
+
+- [`src/app/dashboard/new/ai/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/ai/page.tsx#L13-L58) for message model and parsing helpers
+- [`src/app/dashboard/new/ai/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/ai/page.tsx#L118-L204) for localStorage persistence and focus/scroll management
+- [`src/app/dashboard/new/ai/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/ai/page.tsx#L206-L280) for streaming chat handling and final-description extraction
+- [`src/app/dashboard/new/ai/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/ai/page.tsx#L282-L370) for attachment ingestion
+- [`src/app/dashboard/new/ai/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/new/ai/page.tsx#L372-L413) for saving the resulting description
+
+The AI page persists in-progress chat state to `localStorage` under `referral.bike-ai-chat-v1`. It stores messages, description text, form settings, and the created link. The page clears that local state on unmount and on explicit reset.
+
+Attachments are supported in three forms:
+
+- images, converted to data URLs
+- plain-text-like documents, read directly as text
+- PDFs, extracted into text with `pdfjs-dist`
+
+The client treats a response as finalized either when the model emits `[DESCRIPTION_READY]` or when the user’s prompt looks like a finalize command and the returned text heuristically looks like a final description.
+
+#### AI prompt and API route
+
+The AI route is [`src/app/api/ai/chat/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/ai/chat/route.ts#L16-L130).
+
+Current behavior:
+
+- requires an authenticated session
+- requires `OPENAI_API_KEY`
+- reads the system prompt from `prompts/description-questions.txt`
+- validates attachment shapes
+- appends document text to the last user message as plain text context
+- converts image attachments into OpenAI `image_url` content parts
+- streams plain text back to the browser using `ReadableStream`
+- uses `process.env.OPENAI_MODEL || "gpt-4o"`
+
+The prompt in [`prompts/description-questions.txt`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/prompts/description-questions.txt#L1-L187) defines the assistant as a concise interviewer that gathers fit/personality details and eventually emits:
+
+- `[DESCRIPTION_READY]`
+- `[TITLE]...[/TITLE]`
+- `[DESCRIPTION]...[/DESCRIPTION]`
+
+### 5. Description persistence and lifecycle operations
+
+The main description API lives in [`src/app/api/descriptions/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/descriptions/route.ts#L6-L99).
+
+`GET /api/descriptions`
+
+- requires auth
+- returns all descriptions owned by the current user
+- includes only root links for each description
+
+`POST /api/descriptions`
+
+- requires auth
+- validates title/content presence
+- parses constraint inputs with `parseDescriptionConstraints`
+- creates the `Description`
+- creates the root `Link` in the same Prisma create call
+- marks the root link `createdById` as the owner id
+
+Additional lifecycle operations are in [`src/app/api/descriptions/[id]/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/descriptions/%5Bid%5D/route.ts#L5-L103):
+
+- `GET` returns a description with owner and link creators
+- `DELETE` verifies ownership, then deletes referrals, links, and the description in a transaction
+- `PATCH` currently supports only `{ action: "reopen" }`, which nulls `expiresAt`
+
+### 6. Public link mechanism
+
+The public page is [`src/app/d/[token]/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/page.tsx#L7-L123).
+
+On each request it:
+
+1. resolves the token through `getPublicLinkShareData`
+2. returns metadata for SEO/OG/social cards
+3. reads the viewer session
+4. shows title, owner display name, badges, and full description content
+5. either shows an expired banner or renders `PublicLinkPanel`
+
+The token-to-display mapping is produced by [`src/lib/public-link-share.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/public-link-share.ts#L87-L138). That helper:
+
+- loads the link, description, owner, creator, and parent
+- computes whether the description is expired
+- builds a clipped summary line from description content
+- builds an action line based on auth requirement, self-referral policy, and expiration
+- builds up to four badge strings
+- constructs canonical page and OG image URLs
+
+The same share object powers both `generateMetadata` and the OG image route.
+
+The OG image is rendered in [`src/app/d/[token]/opengraph-image.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/opengraph-image.tsx#L23-L177), which uses `ImageResponse` to render title, summary, action line, owner name, and badges onto a 1200x630 image.
+
+### 7. Forwarding mechanism
+
+Forwarding rules are validated by [`validateForwarding` in `src/lib/description-constraints.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-constraints.ts#L117-L179).
+
+It:
+
+- looks up the parent link by token
+- rejects unknown tokens
+- rejects expired descriptions
+- enforces `maxBreadth` by counting `childLinks`
+- computes link depth by walking parent pointers and enforces `maxDepth`
+- returns the parent link id, description id, and whether auth is required
+
+The forwarding API is [`src/app/api/links/[token]/forward/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/links/%5Btoken%5D/forward/route.ts#L6-L33).
+
+When called:
+
+- it optionally reads the current session
+- validates the branch through `validateForwarding`
+- rejects anonymous callers when the description requires authentication
+- creates a new `Link` with:
+  - `descriptionId` from the validation result
+  - `parentLinkId` equal to the current branch
+  - `createdById` equal to the user id or `null`
+- returns the new public token and relative URL
+
+The public UI wraps this API in two different ways.
+
+#### Auth-required public links
+
+In [`src/app/d/[token]/public-link-panel.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/public-link-panel.tsx#L110-L124), anonymous users are told to sign in before forwarding or referring.
+
+#### Auth-optional public links
+
+In [`src/app/d/[token]/public-link-panel.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/public-link-panel.tsx#L40-L104), anonymous visitors automatically receive a personal tracked forwarded link:
+
+- the component caches one forwarded token in `localStorage` under `referral.bike:auto-forward:{token}`
+- if no cached token exists, it immediately posts to `/api/links/{token}/forward`
+- when a token exists, it derives a full absolute URL
+- it tries to copy that URL to the clipboard automatically
+- it still shows a sign-in path for users who want to attach an answer to that branch
+
+This means anonymous sharing is modeled as link creation without an authenticated `createdById`.
+
+### 8. Referral submission mechanism
+
+Referral submission is only available to authenticated users.
+
+The client UI is [`src/app/d/[token]/link-actions.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/link-actions.tsx#L6-L211).
+
+It exposes three actions:
+
+- forward this link
+- refer someone
+- self-referral, only when `allowsSelfReferrals` is true
+
+The API is [`src/app/api/links/[token]/refer/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/links/%5Btoken%5D/refer/route.ts#L13-L88).
+
+Current behavior:
+
+- requires authentication
+- accepts `kind`, `referredName`, `referredContact`, `message`, and `aboutSelf`
+- rejects `NOPE_SORRY`
+- loads the link and description policy
+- rejects unknown tokens
+- rejects expired descriptions
+- rejects self-referrals when disabled
+- for `STANDARD` referrals:
+  - uses user-provided `referredName`
+  - uses user-provided `referredContact`
+  - uses optional freeform `message`
+- for `SELF_REFERRAL`:
+  - uses the signed-in user’s own name/email as the referred person
+  - uses `aboutSelf` as the stored message
+- creates the `Referral` with `referredById` equal to the submitting user
+
+Because the referral attaches to the specific current link, the owner can later see which branch produced which candidate.
+
+### 9. Graph construction and visualization
+
+The owner detail page is [`src/app/dashboard/descriptions/[id]/page.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/dashboard/descriptions/%5Bid%5D/page.tsx#L12-L139).
+
+It:
+
+- requires auth
+- loads the description, owner, links, link creators, and referrals
+- rejects non-owners by redirecting back to `/dashboard`
+- computes expiration and root link
+- builds a graph model
+- renders the full description and the graph side by side
+- shows a development-only SVG export button
+
+The graph model comes from [`src/lib/description-graph.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-graph.ts#L94-L193).
+
+Important mapping behavior:
+
+- the `Description` itself becomes one root node
+- the root `Link` is hidden as a separate node
+- referrals on the root link attach directly to the description node
+- non-root links become visible `link` nodes
+- first-layer forwarded links connect directly from the description node with edge kind `root`
+- deeper forwarded links connect from parent link nodes with edge kind `forward`
+- `STANDARD` and `SELF_REFERRAL` referrals become separate candidate nodes with edge kind `referral`
+- `NOPE_SORRY` referrals are ignored in rendering
+
+The graph UI is in [`src/components/description-graph.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/components/description-graph.tsx#L201-L520).
+
+The component:
+
+- lazy-loads `vis-network`
+- converts graph nodes and edges into styled `DataSet` objects
+- uses force-based layout with deterministic `randomSeed: 7`
+- disables zooming but allows hover/click interactions in normal mode
+- tracks hovered and focused nodes
+- dims unrelated nodes/edges when a node is focused
+- shows a detail panel for the hovered node
+- shows a directory panel with filtered lists for:
+  - forwards
+  - referred candidates
+  - self-referred candidates
+- renders a larger static-style container in export presentation mode
+
+### 10. Development-only graph export and example data
+
+There are two development-only mechanisms around graphs.
+
+#### Graphviz export
+
+The route [`src/app/api/dev/descriptions/[id]/graphviz/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/dev/descriptions/%5Bid%5D/graphviz/route.ts#L7-L76):
+
+- is disabled in production
+- requires authentication and ownership
+- rebuilds the same graph model used by the UI
+- selects a Graphviz engine from query params
+- returns rendered SVG
+
+The SVG renderer in [`src/lib/graphviz-export.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/graphviz-export.ts#L115-L191):
+
+- converts the graph model into DOT
+- uses circular nodes for descriptions and links
+- uses rounded boxes for referral nodes
+- uses different colors for description, link, standard referral, and self-referral nodes
+- prefers the `twopi` radial layout by default
+- shells out to `/opt/homebrew/bin/dot`
+
+#### Example graph generation
+
+The dev button in [`src/components/dev-example-button.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/components/dev-example-button.tsx#L8-L50) posts to `/api/dev/example-description` and then redirects to the created description detail page.
+
+That route lives in [`src/app/api/dev/example-description/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/dev/example-description/route.ts#L5-L20) and delegates to [`src/lib/dev-example-description.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/dev-example-description.ts#L61-L98).
+
+`createExampleDescriptionForUser`:
+
+- is disabled in production
+- loads a JSON spec from `src/lib/example-description-spec.json`
+- creates a description with a root link
+- recursively creates child links and referrals
+- upserts synthetic users by email so the graph has realistic branch actors
+
+### 11. Additional data access endpoint for chain trees
+
+There is a second owner-only chain endpoint at [`src/app/api/descriptions/[id]/chain/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/descriptions/%5Bid%5D/chain/route.ts#L6-L59).
+
+This route:
+
+- verifies auth and ownership
+- fetches all links and referrals for the description
+- builds an explicit nested tree by connecting `parentLinkId` to `children`
+- returns `{ root }`
+
+This tree endpoint is separate from the graph-model path used by the dashboard page.
+
+## End-to-End Flow Map
+
+### Owner flow
+
+1. User signs in with Google.
+2. User visits `/dashboard`.
+3. User creates a description manually or through the AI chat flow.
+4. `/api/descriptions` stores the description and root link.
+5. User shares the root `/d/{token}` URL.
+6. User later opens `/dashboard/descriptions/{id}` to inspect the graph.
+
+### Anonymous forwarding flow for auth-optional descriptions
+
+1. Visitor opens `/d/{token}`.
+2. `PublicLinkPanel` auto-requests `/api/links/{token}/forward`.
+3. Server validates expiration, breadth, and depth.
+4. Server creates a child link with `createdById = null`.
+5. Browser caches that forwarded token locally.
+6. Visitor pastes their personal tracked link to someone else.
+
+### Authenticated referral flow
+
+1. Signed-in user opens `/d/{token}`.
+2. `PublicLinkPanel` renders `LinkActions`.
+3. User either forwards or submits a referral.
+4. Forwarding creates a child `Link`.
+5. Referral submission creates a `Referral` on the current link.
+6. Owner later sees the branch and referral in the graph view.
+
+## Code References
+
+- [`prisma/schema.prisma`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/prisma/schema.prisma#L61-L108) - description, link, referral, and referral-kind schema
+- [`src/lib/auth.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/auth.ts#L6-L28) - NextAuth configuration and Google provider
+- [`src/lib/app-session.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/app-session.ts#L10-L39) - session lookup plus dev auth bypass
+- [`src/lib/prisma.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/prisma.ts#L23-L58) - database URL resolution and Prisma client initialization
+- [`src/middleware.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/middleware.ts#L5-L34) - non-www redirect and dashboard auth gate
+- [`src/app/api/descriptions/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/descriptions/route.ts#L21-L99) - description creation and root link creation
+- [`src/lib/description-constraints.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-constraints.ts#L126-L179) - forwarding validation against expiration, breadth, and depth
+- [`src/app/api/links/[token]/forward/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/links/%5Btoken%5D/forward/route.ts#L6-L33) - child link creation
+- [`src/app/api/links/[token]/refer/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/links/%5Btoken%5D/refer/route.ts#L13-L88) - standard and self-referral creation
+- [`src/app/d/[token]/public-link-panel.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/d/%5Btoken%5D/public-link-panel.tsx#L40-L190) - public forwarding UX, auto-forward caching, sign-in gate
+- [`src/lib/public-link-share.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/public-link-share.ts#L87-L138) - public share data, summary, action text, and OG URL construction
+- [`src/app/api/ai/chat/route.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/app/api/ai/chat/route.ts#L34-L130) - AI prompt loading, attachment adaptation, and streaming response
+- [`prompts/description-questions.txt`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/prompts/description-questions.txt#L160-L187) - required final output markers for title and description
+- [`src/lib/description-graph.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/description-graph.ts#L94-L193) - graph model construction from links and referrals
+- [`src/components/description-graph.tsx`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/components/description-graph.tsx#L293-L434) - vis-network rendering, stabilization, hover/focus behavior
+- [`src/lib/graphviz-export.ts`](https://github.com/harqian/fit-referals/blob/93888106d0f57096f65c44418b90fe1d3db64e83/src/lib/graphviz-export.ts#L115-L191) - DOT generation and Graphviz SVG rendering
+
+## Open Questions
+
+- No major open questions were required to map the current mechanisms. The code paths above are internally consistent enough to describe the live structure as-is.
+
+Describe this app as something that can help people that are looking for people, vc money, or jobs, in a friendly and helpful way. Make sure to not be officious or obnoxious. In other words, as a company, this is an early stage user growth ploy. Write a 50 words description I could send to a general audience for this purpose.
+[END PROMPT 2]
+[BEGIN BASELINE 2.1: ChatGPT]
+This app helps you find the right people through trusted networks. Share what you are looking for, whether that is a hire, warm intro, customer, investor, or job opportunity, and let others pass it along with context. You can see how referrals spread, where great leads come from, and what works.
+[END BASELINE 2.1: ChatGPT]
+[BEGIN PROMPT 3]
+Here is a plan for a cool tool:
+
+Layer 1: Core Engine — Precision Mapping (specificity + succinctness)
+Take input text, identify vague/ambiguous terms
+Generate a spectrum of replacements from vague → precise
+Score/rank replacements along a formalized specificity axis
+This is the foundation everything else builds on
+Layer 2: Context Calibration
+Audience profiling — who is the description for? (community, culture, domain)
+Domain vocabulary — pull from subject-specific lexicons (literary, mathematical, technical, colloquial)
+Cross-language precision — when a concept is more precisely expressed in another language/idiom, surface that
+Emotional register — calibrate tone/feeling, not just denotation
+Layer 3: Personalization
+Quiz/preference system to learn how a user likes things described
+Read user's writing to infer their style
+"Which do you like better?" comparative selection
+Adapts Layer 2 choices to individual taste
+Add in specific ideas, words, style that the user wants to include
+Layer 4: Output Modes
+Text replacement (inline, the synonym-swap UX)
+Visual generation (image, video, graph representations)
+Slider interface (vague ↔ precise, live-updating)
+Layer 5: Applications
+Copywriting / ad targeting by audience specificity circle
+Job/program applications (frame descriptions for evaluator context)
+hiring/cofounder search, want to describe the person you want well
+Companies pitching to vc’s for investment
+Vc’s looking for companies / founders / ppl that might become founders
+Teaching users to describe better themselves (not just doing it for them)
+Skill descriptions in Claude (when to use, when not to, output differences)
+Generate better videos, images, text for media purposes
+Translational meaning preservation
+Writing in someone’s voice
+Writing skills better (specifically when to use it, that is often confusing)
+Layer 6: Evaluation
+a/b testing
+User inspection
+Iterative improvement where the model can edit the skill for it to be better
+
+Describe this tool in a clear, concise way for a tech audience that is very familiar with technical concepts like agents, skills, generative models, and precision. 100 words.
+[END PROMPT 3]
+[BEGIN BASELINE 3.1: ChatGPT]
+A precision-augmentation system that transforms vague language into context-optimized, audience-specific descriptions.
+Core engine: detects ambiguity in input text, generates candidate replacements across a vague → precise spectrum, and ranks them along a formal specificity axis.
+Context calibration: conditions outputs on audience, domain lexicons, cross-language precision, and emotional register.
+Personalization layer: learns user stylistic preferences through comparative selection, quizzes, and writing analysis.
+Output interfaces: inline replacement, precision sliders, and multimodal generation (text, image, video, graphs).
+Applications: targeting, applications, founder/company search, and skill articulation.
+Evaluation loop: A/B testing, user inspection, and self-improving skill updates.
+[END BASELINE 3.1: ChatGPT]
+
