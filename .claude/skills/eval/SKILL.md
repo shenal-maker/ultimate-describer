@@ -7,7 +7,7 @@ allowed-tools: [Read, Write, Bash, Grep]
 
 # /eval — language precision evaluator
 
-you are the evaluation engine. you score language precision outputs across 10 metrics. you ARE the judge — no API calls, no external services. you evaluate directly using your own reasoning.
+you are the evaluation engine. you score language precision outputs across 11 metrics. you ARE the judge — no API calls, no external services. you evaluate directly using your own reasoning.
 
 ## input modes
 
@@ -72,22 +72,31 @@ only works with 3+ test cases of the same subject_type. shuffle the skill output
 - skip if fewer than 3 cases of same type
 
 ### 5. precision vector (3-axis, 0-10 each)
+score BOTH baseline and skill output on all three axes:
 - **denotative**: how well does it narrow down WHICH [subject_type] this is?
 - **connotative**: how well does it convey the emotional/tonal feel?
 - **pragmatic**: how well does it achieve the stated purpose?
 
-### 6. voice preservation (0-10)
-compare baseline to skill output. did the rewrite preserve the original writer's voice, tone, and register?
-- 10 = identical voice, just more precise
-- 0 = completely different voice
-- note specific markers preserved and lost
+### 6. voice naturalness (0-10)
+score BOTH baseline and skill output: does it sound like a human wrote it?
+- 0 = obvious AI slop (buzzword soup, hollow superlatives, "leveraging synergies")
+- 5 = passable but generic, could be either human or AI
+- 10 = reads like a specific human voice with texture, rhythm, and opinion
+- note specific AI-sounding or human-sounding markers in each
+
+### 6b. voice-to-purpose fit (0-10)
+score BOTH baseline and skill output: does the voice match what the audience and purpose call for?
+- 0 = completely wrong register (formal academic tone for a casual slack message)
+- 5 = acceptable but not optimized for the context
+- 10 = voice is exactly what the audience/purpose demands
+- requires `audience` or `purpose` fields; skip if neither is present
 
 ### 7. coherence (0-10)
-does the skill output read as natural prose?
+score BOTH baseline and skill output:
 - 0 = thesaurus vomit
 - 5 = functional but awkward
 - 10 = could appear in published writing
-- note specific issues
+- note specific issues for each
 
 ### 8. vagueness detection
 for test cases with `expected_vague` field: is the input text actually vague or precise?
@@ -110,6 +119,8 @@ for test cases with the same `input_text` but different `audience` values: do th
 
 ## output format
 
+every metric that CAN be scored for both baseline and skill MUST be scored for both. the whole point of eval is showing the delta — what changed.
+
 ```
 ## eval results
 
@@ -117,33 +128,43 @@ for test cases with the same `input_text` but different `audience` values: do th
 
 #### [test id]
 
-| metric | baseline | skill | delta |
-|--------|----------|-------|-------|
+| metric | baseline | skill | Δ |
+|--------|----------|-------|---|
 | referent set size | ~[N] | ~[N] | [X]x reduction |
 | self-check pass rate | [N]% | [N]% | +[N]pp |
 | info density | [N] facts/word | [N] facts/word | [X]x |
-| precision vector | — | D:[N] C:[N] P:[N] (mean [N]) | — |
-| voice preservation | — | [N]/10 | — |
-| coherence | — | [N]/10 | — |
+| precision: denotative | [N]/10 | [N]/10 | +[N] |
+| precision: connotative | [N]/10 | [N]/10 | +[N] |
+| precision: pragmatic | [N]/10 | [N]/10 | +[N] |
+| voice naturalness | [N]/10 | [N]/10 | +[N] |
+| voice-to-purpose fit | [N]/10 | [N]/10 | +[N] |
+| coherence | [N]/10 | [N]/10 | +[N] |
+
+**what changed:** [1-2 sentences on the biggest improvement and any regression]
 
 [repeat for each test case]
 
 ### aggregate
 
-| metric | score |
-|--------|-------|
-| referent reduction | mean [X]x (median [X]x) |
-| sentence self-check | baseline [N]% → skill [N]% |
-| information density | mean [X]x gain |
-| precision vector | mean [N]/10 |
-| voice preservation | mean [N]/10 |
-| coherence | mean [N]/10 |
-| vagueness detection | [N]% accuracy |
-| cross-lingual calibration | [N] mean error |
-| audience adaptation | [N]/10 |
+| metric | baseline | skill | Δ |
+|--------|----------|-------|---|
+| referent reduction | mean ~[N] | mean ~[N] | mean [X]x |
+| sentence self-check | [N]% | [N]% | +[N]pp |
+| information density | [N] f/w | [N] f/w | [X]x |
+| precision vector | [N]/10 | [N]/10 | +[N] |
+| voice naturalness | [N]/10 | [N]/10 | +[N] |
+| voice-to-purpose fit | [N]/10 | [N]/10 | +[N] |
+| coherence | [N]/10 | [N]/10 | +[N] |
+| vagueness detection | [N]% accuracy | | |
+| cross-lingual calibration | [N] mean error | | |
+| audience adaptation | [N]/10 | | |
 
-**best metric:** [name]
-**worst metric:** [name] — [1 sentence on why and how to fix]
+### performance summary
+
+**overall lift:** [single number or phrase summarizing baseline→skill improvement]
+**best improvement:** [metric name] — [why]
+**worst/regression:** [metric name] — [why and how to fix]
+**biggest gap remaining:** [what the skill output still gets wrong]
 ```
 
 ## hard constraints
