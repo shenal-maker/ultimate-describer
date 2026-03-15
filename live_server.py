@@ -1,4 +1,5 @@
 import argparse
+import base64
 import json
 import os
 import re
@@ -13,7 +14,11 @@ from urllib import error, request
 
 ROOT = Path(__file__).resolve().parent
 OPENAI_URL = "https://api.openai.com/v1/chat/completions"
-OPENAI_MODEL = "gpt-4.1-mini"
+OPENAI_IMAGES_URL = "https://api.openai.com/v1/images/generations"
+OPENAI_MODEL_BASELINE = "gpt-5.4"
+OPENAI_MODEL_SKILL = "gpt-5.4"
+OPENAI_MODEL_JUDGE = "gpt-5-mini"
+OPENAI_MODEL_IMAGE = "gpt-image-1"
 
 
 def load_dotenv() -> None:
@@ -36,17 +41,31 @@ def require_openai_key() -> str:
     return api_key
 
 
-def openai_chat(system: str, user: str, *, temperature: float = 0.6, max_tokens: int = 900) -> str:
+def openai_chat(
+    system: str,
+    user: str,
+    *,
+    model: str,
+    temperature: float = 0.6,
+    max_tokens: int | None = None,
+) -> str:
     api_key = require_openai_key()
     payload = {
-        "model": os.environ.get("OPENAI_MODEL", OPENAI_MODEL),
+        "model": model,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
     }
+    if model.startswith("gpt-5"):
+        if max_tokens is not None:
+            payload["max_completion_tokens"] = max_tokens
+        if temperature == 1:
+            payload["temperature"] = temperature
+    else:
+        payload["temperature"] = temperature
+        if max_tokens is not None:
+            payload["max_tokens"] = max_tokens
     req = request.Request(
         OPENAI_URL,
         data=json.dumps(payload).encode("utf-8"),
@@ -77,8 +96,9 @@ def judge_json(prompt: str) -> dict[str, Any]:
     text = openai_chat(
         "you are a strict evaluator for a language precision system. respond with json only.",
         prompt,
+        model=os.environ.get("OPENAI_MODEL_JUDGE", OPENAI_MODEL_JUDGE),
         temperature=0.2,
-        max_tokens=700,
+        max_tokens=int(os.environ["OPENAI_MAX_TOKENS_JUDGE"]) if os.environ.get("OPENAI_MAX_TOKENS_JUDGE") else None,
     )
     match = re.search(r"\{.*\}", text, re.DOTALL)
     payload = match.group() if match else text
@@ -86,6 +106,45 @@ def judge_json(prompt: str) -> dict[str, Any]:
         return json.loads(payload)
     except json.JSONDecodeError as exc:
         raise RuntimeError(f"failed to parse evaluator json: {text[:300]}") from exc
+
+
+def openai_image_generate(prompt: str) -> dict[str, Any]:
+    api_key = require_openai_key()
+    payload = {
+        "model": os.environ.get("OPENAI_MODEL_IMAGE", OPENAI_MODEL_IMAGE),
+        "prompt": prompt,
+        "size": os.environ.get("OPENAI_IMAGE_SIZE", "1024x1024"),
+        "quality": os.environ.get("OPENAI_IMAGE_QUALITY", "medium"),
+    }
+    req = request.Request(
+        OPENAI_IMAGES_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with request.urlopen(req, timeout=300) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+    except error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        if exc.code == 401:
+            raise RuntimeError("openai image request failed (401): check OPENAI_API_KEY in .env") from exc
+        raise RuntimeError(f"openai image request failed ({exc.code}): {detail[:240]}") from exc
+    except error.URLError as exc:
+        raise RuntimeError(f"openai image request failed: {exc.reason}") from exc
+
+    data = (body.get("data") or [{}])[0]
+    if data.get("b64_json"):
+        return {
+            "mime_type": "image/png",
+            "data_url": f"data:image/png;base64,{data['b64_json']}",
+        }
+    if data.get("url"):
+        return {"mime_type": "url", "data_url": data["url"]}
+    raise RuntimeError(f"unexpected image response shape: {body}")
 
 
 def stream_chunks(text: str, *, chunk_words: int = 3):
@@ -160,25 +219,161 @@ def generate_baseline(prompt: str) -> str:
         "you answer user requests directly in plain prose. "
         "be competent but generic. avoid analysis headers. output only the final text.",
         prompt,
+        model=os.environ.get("OPENAI_MODEL_BASELINE", OPENAI_MODEL_BASELINE),
         temperature=0.8,
-        max_tokens=700,
+        max_tokens=int(os.environ["OPENAI_MAX_TOKENS_BASELINE"]) if os.environ.get("OPENAI_MAX_TOKENS_BASELINE") else None,
     )
 
 
+# distilled from skills/articulate, skills/describe, skills/precise, and
+# skills/describe-well/references/*. strips claude-code scaffolding ($ARGUMENTS,
+# file i/o, tool calls) and keeps the methodology so any LLM can run it.
+DISTILLED_SKILL_PROMPT = """\
+you are a precision description engine. core principle: precision ≠ verbosity. \
+a precise sentence can be shorter than a vague one. precision = reducing the set \
+of things the description could refer to.
+
+## step 1 — calibrate for the audience
+
+before writing anything, map the audience and purpose to four axes and derive \
+concrete operating targets from them.
+
+axes (each 0-10):
+- domain fluency: how much jargon, abstraction, and background they absorb. \
+  0 = child, 4-6 = practitioner, 9-10 = expert evaluator.
+- attention budget: how much setup and detail density they tolerate. \
+  0 = one-shot skim, 4-6 = compact explanation, 9-10 = deep reader.
+- epistemic stance: how much evidence and qualification they expect. \
+  0 = wants a clear take, 7-8 = skeptical (needs evidence and scope conditions).
+- action orientation: whether they need to decide, compare, or just notice. \
+  0 = passive appreciation, 7-8 = active chooser needing tradeoffs.
+
+derived targets:
+- vocabulary ceiling: highest acceptable jargon and abstraction level.
+- compression target: how dense or unpacked the prose should be.
+- evidence threshold: how much support claims need.
+- differentiation pressure: how aggressively to separate this subject from similar ones.
+
+critical interactions:
+- high fluency + low attention → keep specialist terms, compress setup, skip definitions.
+- low fluency + high epistemic stance → explain plainly, make evidence explicit and legible.
+- high action + high epistemic stance → state tradeoffs, evidence limits, consequence-bearing details.
+- low action + high attention → richer texture, stay under vocabulary ceiling.
+- low attention + high action → front-load decision-relevant distinctions, cut decoration.
+
+## step 2 — map dimensions for the subject type
+
+identify what matters for this type of subject, then filter by purpose.
+
+- person: behavior patterns, competencies, energy, values, quirks, how they make others feel, \
+  what they actually do vs what their title says.
+- company: what they actually do (not mission statement), culture as visible behavior, trajectory, \
+  market position, distinctive choices they made that others didn't.
+- experience: sensory details, emotional arc, before/after delta, what you'd tell someone who wasn't there.
+- idea: core mechanism, why it's non-obvious, what it predicts, what it replaces, boundary conditions.
+- place: atmosphere, what you notice first, what you notice after 10 minutes, who belongs there.
+- skill: when to use it, what changes in the output, when NOT to use it, learning curve shape.
+- group: individual roles/contributions, dynamic between members, shared energy, what an outsider notices first.
+- thing/practice: what it actually does mechanically, observable effects, how it differs from the closest alternative.
+
+not all dimensions matter for every purpose. rank by relevance and drop the rest.
+
+## step 3 — draft with precision rules
+
+writing rules (apply all of these):
+- replace every generic term with a specific one. "does well" → what specifically? \
+  "innovative" → what did they build? "passionate" → what do they actually do that shows it?
+- prefer concrete evidence over adjectives. show the behavior, not the label. \
+  "she's organized" → "she turns chaotic plans into lists with owners and dates within ten minutes."
+- no resume-speak. no "passionate leader", "driven individual", "proven track record". \
+  these describe thousands of people. be specific enough to describe one.
+- no empty intensifiers. "very", "really", "incredibly", "truly" almost never add precision.
+- if something is vague because you lack information, flag what you'd need rather than guessing.
+- match voice to purpose. a friend introduction sounds different from an investor brief. \
+  precision within the register, not a register shift.
+
+referent reduction test (the core quality check):
+for each descriptive choice, ask: "how many other {subject_type}s could this also describe?" \
+if the answer is "most of them", try harder. aim for 10x+ referent set reduction per key sentence.
+
+example calibration shifts (study these — they show the target quality level):
+- "our startup is doing well" (vague) → "grew from 14 to 41 paying customers in two quarters, \
+  cut churn below 3%, 11 months of runway at current burn" (calibrated for vc_pitch: high epistemic, \
+  high action orientation, required terms)
+- "it performs semantic entropy analysis over ambiguous lexical spans" (over-specified for audience) → \
+  "it spots vague phrases in your writing and suggests sharper replacements" (calibrated for blog reader: \
+  low domain fluency, moderate attention)
+- describing a cofounder for an investor: "former manufacturing engineer who runs product like a \
+  constraint solver: turns fuzzy requests into weekly shipping plans, notices cost leaks early, \
+  kills ideas once the numbers stop working" (high action orientation, evidence-backed)
+- same cofounder for a friend: "she has the rare habit of making chaotic plans feel executable. \
+  after ten minutes with her, vague ideas become lists with owners and dates" (lower evidence burden, \
+  behavioral core preserved)
+- a sunset (literary reader): "the light thickens unevenly - amber pooling near the horizon, \
+  the overhead blue not fading but deepening, as if the sky were gaining density rather than \
+  losing color. clouds closest to the sun turn the specific orange of heated metal cooling. \
+  the transition is slow enough that you only notice it has happened, never catch it happening." \
+  (low action orientation, high attention budget — texture and observation over information)
+
+## step 4 — mandatory self-check
+
+for every sentence in your draft:
+1. "could this sentence describe a different {subject_type} equally well?" → if yes, revise or cut.
+2. "does this add information not already in a prior sentence?" → if no, merge or delete.
+3. "is this calibrated for THIS audience, or just more detailed?" → recalibrate if needed.
+
+## step 5 — cross-lingual enrichment (optional, max 2 terms)
+
+if another language captures a concept more precisely than english, consider using it with an \
+inline gloss in italics. only if: the precision gain is real, a native speaker would recognize \
+the usage, and the audience would benefit. exotic is not better. skip if english handles it fine.
+
+## step 6 — compression pass
+
+- delete filler sentences, circling clauses, restated ideas.
+- collapse redundant sentences that make the same point differently.
+- if a word count target is given, respect it — but never cut below the point where a \
+  load-bearing distinction is lost. overshooting by 20% is better than losing a dimension \
+  that makes the description unique.
+
+## domain profiles (apply when purpose matches)
+
+vc_pitch: required terms include market, traction, runway, burn rate. forbidden: hopefully, maybe, \
+revolutionary, game-changing. every strong claim ties to traction, distribution, unit economics, or \
+team evidence. no fake precision beyond 2 sig figs. no aspirational hype without operating facts.
+
+technical_docs: required terms include interface, constraint, failure mode. forbidden: intuitive, \
+simply, obviously. don't hide prerequisites. don't imply guarantees where only best-effort exists.
+
+blog_post: requires concrete examples. forbidden: leverage, paradigm, robust. define specialist \
+language. avoid stacking multiple new concepts per sentence. don't confuse accessibility with vagueness.
+
+## hard constraints
+
+- no hallucinated specificity. don't invent facts to sound precise.
+- preserve the input's voice and register.
+- coherence over per-word precision. the description must read as a whole, not a bag of sharp fragments.
+- calibration before escalation. don't exceed audience fit for narrowness.
+- no fake etymology or dubious cross-lingual claims.
+- short is fine. do not pad.
+- output ONLY the final polished description text. no headers, no "## output", no report, \
+  no pipeline commentary, no meta-discussion of your process.\
+"""
+
+
 def generate_skill(prompt: str, context: LiveContext) -> str:
-    context_lines = [
-        f"purpose: {context.purpose or 'not explicitly stated'}",
-        f"audience: {context.audience or 'not explicitly stated'}",
-        f"subject_type: {context.subject_type}",
-    ]
+    user_msg = (
+        f"subject_type: {context.subject_type}\n"
+        f"purpose: {context.purpose or 'not explicitly stated'}\n"
+        f"audience: {context.audience or 'not explicitly stated'}\n\n"
+        f"request:\n{prompt}"
+    )
     return openai_chat(
-        "you are a context-calibrated description system. "
-        "generate text that is more precise, discriminating, and useful than a generic baseline, "
-        "while staying natural and readable. no headings, no analysis, no bullet list unless the user explicitly asked for one. "
-        "every sentence should try to say something that would not apply equally well to many nearby things.",
-        "\n".join(context_lines) + f"\n\nrequest:\n{prompt}",
+        DISTILLED_SKILL_PROMPT,
+        user_msg,
+        model=os.environ.get("OPENAI_MODEL_SKILL", OPENAI_MODEL_SKILL),
         temperature=0.7,
-        max_tokens=900,
+        max_tokens=int(os.environ["OPENAI_MAX_TOKENS_SKILL"]) if os.environ.get("OPENAI_MAX_TOKENS_SKILL") else None,
     )
 
 
@@ -253,8 +448,9 @@ def judge_summary(prompt: str, baseline: str, skill: str) -> str:
         "write 2 concise sentences about what changed and whether the precision upgrade helped. "
         "no bullets, no headings.",
         f"user request:\n{prompt}\n\nbaseline:\n{baseline}\n\nskill:\n{skill}",
+        model=os.environ.get("OPENAI_MODEL_JUDGE", OPENAI_MODEL_JUDGE),
         temperature=0.3,
-        max_tokens=180,
+        max_tokens=int(os.environ["OPENAI_MAX_TOKENS_JUDGE"]) if os.environ.get("OPENAI_MAX_TOKENS_JUDGE") else None,
     )
 
 
@@ -275,6 +471,7 @@ def emit_event(handler: SimpleHTTPRequestHandler, payload: dict[str, Any]) -> No
 
 def handle_live_generate(handler: SimpleHTTPRequestHandler, body: dict[str, Any]) -> None:
     prompt = str(body.get("prompt", "")).strip()
+    generate_image = bool(body.get("generate_image"))
     if not prompt:
         raise RuntimeError("prompt is required")
 
@@ -311,6 +508,27 @@ def handle_live_generate(handler: SimpleHTTPRequestHandler, body: dict[str, Any]
         emit_event(handler, {"type": "skill_delta", "text": chunk})
         time.sleep(0.03)
     emit_event(handler, {"type": "phase", "phase": "skill", "status": "done", "label": "complete"})
+
+    if generate_image:
+        emit_event(handler, {"type": "phase", "phase": "image", "status": "active", "label": "rendering"})
+        emit_event(handler, {"type": "status", "message": "rendering baseline and skill images"})
+        baseline_image_prompt = (
+            "create a single compelling image that visualizes this description faithfully. "
+            "favor concrete visual details over text overlays.\n\n"
+            f"{baseline}"
+        )
+        skill_image_prompt = (
+            "create a single compelling image that visualizes this description faithfully. "
+            "favor concrete visual details over text overlays.\n\n"
+            f"{skill}"
+        )
+        baseline_image = openai_image_generate(baseline_image_prompt)
+        emit_event(handler, {"type": "image_prompt", "side": "baseline", "text": baseline_image_prompt})
+        emit_event(handler, {"type": "image", "side": "baseline", "image": baseline_image})
+        skill_image = openai_image_generate(skill_image_prompt)
+        emit_event(handler, {"type": "image_prompt", "side": "skill", "text": skill_image_prompt})
+        emit_event(handler, {"type": "image", "side": "skill", "image": skill_image})
+        emit_event(handler, {"type": "phase", "phase": "image", "status": "done", "label": "complete"})
 
     emit_event(handler, {"type": "phase", "phase": "eval", "status": "active", "label": "judging"})
     emit_event(handler, {"type": "status", "message": "drawing evals"})

@@ -29,7 +29,7 @@ button:hover{background:#f0e7d8}
 .helper{font-family:'JetBrains Mono',monospace;font-size:12px;color:#8a8377;line-height:1.6}
 .live-panel{display:none;margin-bottom:16px}
 .live-panel.is-visible{display:block}
-.live-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.live-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .live-card{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;background:#f5efe5;border:1px solid #ddd5c5;border-radius:4px;padding:12px}
 .live-card strong{display:block;font-size:13px;color:#40362b;margin-bottom:4px}
 .phase{display:inline-flex;align-items:center;gap:6px}
@@ -38,10 +38,18 @@ button:hover{background:#f0e7d8}
 .phase.is-done::before{background:#2D8A4E}
 .phase.is-idle::before{background:#c8b79c}
 .live-line{font-family:'JetBrains Mono',monospace;font-size:12px;color:#6e6659;margin-top:10px}
+.image-panel{display:none;margin-bottom:16px}
+.image-panel.is-visible{display:block}
+.image-compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.image-slot{background:#f5efe5;border:1px solid #ddd5c5;border-radius:4px;overflow:hidden}
+.image-slot-head{padding:10px 12px;border-bottom:1px solid #ddd5c5;font-family:'JetBrains Mono',monospace;font-size:12px;color:#6e6659;background:#fbf8f1}
+.image-wrap{min-height:220px;display:grid;place-items:center}
+.image-wrap img{display:block;max-width:100%;height:auto}
+.image-placeholder{font-family:'JetBrains Mono',monospace;font-size:12px;color:#7b7468;padding:18px;line-height:1.7;text-align:center}
+.image-meta{font-family:'JetBrains Mono',monospace;font-size:12px;color:#6e6659;line-height:1.7;padding:10px 12px;border-top:1px solid #ddd5c5;white-space:pre-wrap}
 .narrative{font-size:19px;line-height:1.7;margin-bottom:14px}
-.summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
-.summary-card{font-family:'JetBrains Mono',monospace;font-size:13px;padding:10px 12px;background:#f0ebe2;border:1px solid #ddd5c5;border-radius:3px;line-height:1.6}
-.summary-card strong{display:block;font-size:15px;font-weight:600;color:#1a1a1a}
+.prompt-card{font-family:Georgia,'Iowan Old Style','Palatino Linotype',serif;font-size:24px;padding:14px 16px;background:#f0ebe2;border:1px solid #ddd5c5;border-radius:3px;line-height:1.8}
+.prompt-card strong{display:block;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#7b7468;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
 .scores-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:14px;margin-bottom:14px}
 .scores-table th{text-align:left;color:#bbb;font-weight:400;padding:2px 6px 6px 0}
 .scores-table td{padding:5px 6px 5px 0;vertical-align:middle}
@@ -71,7 +79,6 @@ button:hover{background:#f0e7d8}
 @media (max-width: 900px){
   .top,.split{grid-template-columns:1fr}
   .pane+.pane{border-left:none;border-top:2px dashed #ccc3b0}
-  .summary-grid{grid-template-columns:1fr}
   .composer-grid,.live-grid{grid-template-columns:1fr}
 }
 </style>
@@ -87,6 +94,7 @@ button:hover{background:#f0e7d8}
     <select id="modePicker">
       <option value="static">static</option>
       <option value="dynamic">dynamic</option>
+      <option value="dynamic-image">dynamic-image</option>
     </select>
   </div>
   <div class="picker">
@@ -114,7 +122,7 @@ button:hover{background:#f0e7d8}
       </div>
     </div>
     <div class="helper" id="composerHelper">
-      dynamic mode sends your prompt to a live model run, then draws baseline, skill output, and evals as they come back.
+      dynamic runs text + evals. dynamic-image runs text + image + evals.
     </div>
   </div>
 </div>
@@ -124,9 +132,30 @@ button:hover{background:#f0e7d8}
   <div class="live-grid">
     <div class="live-card"><strong>baseline</strong><span class="phase is-idle" id="phaseBaseline">waiting</span></div>
     <div class="live-card"><strong>skill output</strong><span class="phase is-idle" id="phaseSkill">waiting</span></div>
+    <div class="live-card"><strong>image</strong><span class="phase is-idle" id="phaseImage">waiting</span></div>
     <div class="live-card"><strong>eval draw</strong><span class="phase is-idle" id="phaseEval">waiting</span></div>
   </div>
   <div class="live-line" id="liveMeta">static artifact mode</div>
+</div>
+
+<div class="box image-panel" id="imagePanel">
+  <div class="box-title">generated images</div>
+  <div class="image-compare">
+    <div class="image-slot">
+      <div class="image-slot-head">A — baseline image</div>
+      <div class="image-wrap" id="imageWrapBaseline">
+        <div class="image-placeholder">dynamic-image can generate a baseline image.</div>
+      </div>
+      <div class="image-meta" id="imageMetaBaseline"></div>
+    </div>
+    <div class="image-slot">
+      <div class="image-slot-head">B — skill image</div>
+      <div class="image-wrap" id="imageWrapSkill">
+        <div class="image-placeholder">dynamic-image can generate a skill image.</div>
+      </div>
+      <div class="image-meta" id="imageMetaSkill"></div>
+    </div>
+  </div>
 </div>
 
 <div class="top">
@@ -143,8 +172,8 @@ button:hover{background:#f0e7d8}
 </div>
 
 <div class="box" style="margin-bottom:16px">
-  <div class="box-title">reading notes</div>
-  <div class="summary-grid" id="summaryCards"></div>
+  <div class="box-title">prompt</div>
+  <div id="promptCard"></div>
 </div>
 
 <div class="split-wrap box">
@@ -448,7 +477,7 @@ function renderScores(section,isAggregate){
     {label:'Coherence', key:'coherence', color:'#1A9B8A'}
   ];
   const table=document.getElementById('scoresTable');
-  const headerLabel=state.mode==='dynamic'?'live run':(isAggregate?'aggregate':'selected case');
+  const headerLabel=(state.mode==='dynamic' || state.mode==='dynamic-image')?'live run':(isAggregate?'aggregate':'selected case');
   table.innerHTML=[
     `<tr><th></th><th>A baseline</th><th>B skill</th><th>Δ</th></tr>`,
     ...rows.map(row=>{
@@ -487,42 +516,19 @@ function renderStats(section,isAggregate){
   }).join('');
 }
 
-function renderSummaryCards(section,isAggregate){
-  const cards=[];
-  if(section&&section.narrative){
-    cards.push(`<div class="summary-card"><strong>summary</strong>${section.narrative}</div>`);
+function renderPromptCard(isAggregate){
+  const card=document.getElementById('promptCard');
+  if(isAggregate){
+    card.innerHTML=`<div class="prompt-card"><strong>suite note</strong>aggregate view summarizes the full eval suite. switch back to a test case to compare a specific prompt against its baseline and skill outputs.</div>`;
+    return;
   }
-  if(isAggregate&&state.aggregate){
-    const extra=[
-      ['vagueness detection','vagueness detection'],
-      ['discriminability (person)','discriminability (person)'],
-      ['cross-lingual calibration','cross-lingual calibration']
-    ];
-    extra.forEach(([title,key])=>{
-      const metric=metricLookup(state.aggregate,key);
-      if(metric){
-        cards.push(`<div class="summary-card"><strong>${title}</strong>baseline ${fmtMetric(metric,'baseline')} · skill ${fmtMetric(metric,'skill')} · ${metric.delta}</div>`);
-      }
-    });
-    if(state.performanceSummary){
-      const firstParagraph=state.performanceSummary.split(/\n\s*\n/)[0].replace(/\*\*/g,'');
-      cards.push(`<div class="summary-card"><strong>performance summary</strong>${firstParagraph}</div>`);
-    }
-  } else {
-    const tc=state.testsById[state.selectedId];
-    const promptText=state.mode==='dynamic' && state.live ? state.live.prompt : (tc?tc.input_text:'');
-    if(promptText){
-      cards.push(`<div class="summary-card"><strong>prompt</strong>${abbreviateMiddle(promptText)}</div>`);
-      const context=state.mode==='dynamic' && state.live ? state.live.context : {purpose:tc&&tc.purpose,audience:tc&&tc.audience};
-      if(context && (context.audience||context.purpose)){
-        cards.push(`<div class="summary-card"><strong>context</strong>${context.purpose?`purpose: ${context.purpose}`:''}${context.purpose&&context.audience?' · ':''}${context.audience?`audience: ${context.audience}`:''}</div>`);
-      }
-      if(state.mode==='dynamic' && state.live){
-        cards.push(`<div class="summary-card"><strong>run</strong>${state.live.runLabel}</div>`);
-      }
-    }
+  const tc=state.testsById[state.selectedId];
+  const promptText=(state.mode==='dynamic' || state.mode==='dynamic-image') && state.live ? state.live.prompt : (tc?tc.input_text:'');
+  if(!promptText){
+    card.innerHTML='';
+    return;
   }
-  document.getElementById('summaryCards').innerHTML=cards.join('');
+  card.innerHTML=`<div class="prompt-card"><strong>prompt</strong>${abbreviateMiddle(promptText)}</div>`;
 }
 
 function renderTextBlock(text,elId,color,label){
@@ -537,7 +543,7 @@ function renderTextBlock(text,elId,color,label){
 function renderTextPanes(isAggregate){
   const paneA=document.getElementById('paneA');
   const paneB=document.getElementById('paneB');
-  if(state.mode==='dynamic'){
+  if(state.mode==='dynamic' || state.mode==='dynamic-image'){
     const live=state.live;
     renderTextBlock(live&&live.baselineText?live.baselineText:'', 'paneA', COL_A, 'A');
     renderTextBlock(live&&live.skillText?live.skillText:'', 'paneB', COL_B, 'B');
@@ -555,26 +561,58 @@ function renderTextPanes(isAggregate){
 
 function render(){
   const isDynamic=state.mode==='dynamic';
-  const isAggregate=!isDynamic&&state.view==='aggregate';
-  const section=isDynamic?state.live&&state.live.section:(isAggregate?state.aggregate:state.cases.find(c=>c.id===state.selectedId));
+  const isDynamicImage=state.mode==='dynamic-image';
+  const isLive=isDynamic||isDynamicImage;
+  const isAggregate=!isLive&&state.view==='aggregate';
+  const section=isLive?state.live&&state.live.section:(isAggregate?state.aggregate:state.cases.find(c=>c.id===state.selectedId));
   if(!section)return;
 
   document.getElementById('narrative').textContent=section.narrative||'';
   renderScores(section,isAggregate);
   renderStats(section,isAggregate);
-  renderSummaryCards(section,isAggregate);
+  renderPromptCard(isAggregate);
   renderTextPanes(isAggregate);
   Plotly.react('sphere', buildPlot(section), layout, {responsive:true,displayModeBar:false});
-  document.getElementById('hint').textContent=isDynamic
-    ? 'dynamic mode is generating new content and drawing evals live'
+  document.getElementById('hint').textContent=isLive
+    ? (isDynamicImage ? 'dynamic-image is generating text, image, and evals live' : 'dynamic is generating text and evals live')
     : isAggregate
     ? 'aggregate view summarizes the full suite instead of a single example'
     : 'showing full baseline and skill outputs from tests.json';
-  document.getElementById('callout').textContent=isDynamic
-    ? `dynamic mode is using /api/live-generate for this run`
+  document.getElementById('callout').textContent=isLive
+    ? `live mode is using /api/live-generate for this run`
     : isAggregate
     ? 'aggregate metrics come from the aggregate table and performance summary in results-2026-03-14.md'
     : `metrics and narrative are parsed from results-2026-03-14.md for ${state.selectedId}`;
+}
+
+function renderImagePanel(){
+  const panel=document.getElementById('imagePanel');
+  const wrapBaseline=document.getElementById('imageWrapBaseline');
+  const wrapSkill=document.getElementById('imageWrapSkill');
+  const metaBaseline=document.getElementById('imageMetaBaseline');
+  const metaSkill=document.getElementById('imageMetaSkill');
+  if(state.mode!=='dynamic-image'){
+    panel.classList.remove('is-visible');
+    wrapBaseline.innerHTML=`<div class="image-placeholder">dynamic-image can generate a baseline image.</div>`;
+    wrapSkill.innerHTML=`<div class="image-placeholder">dynamic-image can generate a skill image.</div>`;
+    metaBaseline.textContent='';
+    metaSkill.textContent='';
+    return;
+  }
+  panel.classList.add('is-visible');
+  const live=state.live;
+  if(live&&live.images&&live.images.baseline&&live.images.baseline.data_url){
+    wrapBaseline.innerHTML=`<img alt="generated baseline image" src="${live.images.baseline.data_url}">`;
+  } else {
+    wrapBaseline.innerHTML=`<div class="image-placeholder">waiting for baseline image generation...</div>`;
+  }
+  if(live&&live.images&&live.images.skill&&live.images.skill.data_url){
+    wrapSkill.innerHTML=`<img alt="generated skill image" src="${live.images.skill.data_url}">`;
+  } else {
+    wrapSkill.innerHTML=`<div class="image-placeholder">waiting for skill image generation...</div>`;
+  }
+  metaBaseline.textContent=live&&live.imagePrompts&&live.imagePrompts.baseline?`image prompt\n${live.imagePrompts.baseline}`:'';
+  metaSkill.textContent=live&&live.imagePrompts&&live.imagePrompts.skill?`image prompt\n${live.imagePrompts.skill}`:'';
 }
 
 function populatePickers(){
@@ -624,22 +662,24 @@ function cancelLiveRun(){
 }
 
 function syncToolbarForMode(){
-  const isDynamic=state.mode==='dynamic';
-  document.getElementById('composer').classList.toggle('is-visible', isDynamic);
-  document.getElementById('livePanel').classList.toggle('is-visible', isDynamic);
-  document.getElementById('casePicker').disabled=isDynamic;
-  document.getElementById('viewPicker').disabled=isDynamic;
-  if(isDynamic){
+  const isLive=state.mode==='dynamic' || state.mode==='dynamic-image';
+  document.getElementById('composer').classList.toggle('is-visible', isLive);
+  document.getElementById('livePanel').classList.toggle('is-visible', isLive);
+  document.getElementById('imagePanel').classList.toggle('is-visible', state.mode==='dynamic-image');
+  document.getElementById('casePicker').disabled=isLive;
+  document.getElementById('viewPicker').disabled=isLive;
+  if(isLive){
     document.getElementById('viewPicker').value='case';
   }
 }
 
 function updateLivePanel(){
   const live=state.live;
-  if(state.mode!=='dynamic' || !live){
+  if((state.mode!=='dynamic' && state.mode!=='dynamic-image') || !live){
     document.getElementById('liveMeta').textContent='static artifact mode';
     setPhase('phaseBaseline','idle','waiting');
     setPhase('phaseSkill','idle','waiting');
+    setPhase('phaseImage','idle','waiting');
     setPhase('phaseEval','idle','waiting');
     return;
   }
@@ -647,6 +687,7 @@ function updateLivePanel(){
 }
 
 function resetDynamicState(prompt){
+  const withImage=state.mode==='dynamic-image';
   state.live={
     prompt,
     runLabel:`live run · ${new Date().toLocaleTimeString()}`,
@@ -654,12 +695,15 @@ function resetDynamicState(prompt){
     statusMessage:'connecting to live generator...',
     section:makeBlankDynamicSection(),
     baselineText:'',
-    skillText:''
+    skillText:'',
+    images:{baseline:null,skill:null},
+    imagePrompts:{baseline:'',skill:''}
   };
   document.getElementById('promptInput').value=prompt;
-  document.getElementById('composerHelper').textContent='live model run in progress';
+  document.getElementById('composerHelper').textContent=withImage?'live text + image run in progress':'live text run in progress';
   updateLivePanel();
   render();
+  renderImagePanel();
 }
 
 function applyMetricEvent(event){
@@ -674,6 +718,7 @@ function applyPhaseEvent(event){
   const lookup={
     baseline:'phaseBaseline',
     skill:'phaseSkill',
+    image:'phaseImage',
     eval:'phaseEval'
   };
   const elId=lookup[event.phase];
@@ -693,7 +738,7 @@ function handleLiveEvent(event){
   if(event.type==='context'){
     state.live.context=event.context||state.live.context;
     document.getElementById('composerHelper').textContent=`subject: ${state.live.context.subject_type||'n/a'} · purpose: ${state.live.context.purpose||'n/a'} · audience: ${state.live.context.audience||'n/a'}`;
-    renderSummaryCards(state.live.section,false);
+    render();
     return;
   }
   if(event.type==='phase'){
@@ -708,6 +753,18 @@ function handleLiveEvent(event){
   if(event.type==='skill_delta'){
     state.live.skillText+=event.text||'';
     renderTextPanes(false);
+    return;
+  }
+  if(event.type==='image_prompt'){
+    const side=event.side||'skill';
+    state.live.imagePrompts[side]=event.text||'';
+    renderImagePanel();
+    return;
+  }
+  if(event.type==='image'){
+    const side=event.side||'skill';
+    state.live.images[side]=event.image||null;
+    renderImagePanel();
     return;
   }
   if(event.type==='metric'){
@@ -731,11 +788,12 @@ async function runDynamicGeneration(prompt){
   document.getElementById('metaLine').textContent='starting live generation';
   const controller=new AbortController();
   liveRuntime.abortController=controller;
+  const generateImage=state.mode==='dynamic-image';
 
   const response=await fetch('/api/live-generate',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({prompt}),
+    body:JSON.stringify({prompt,generate_image:generateImage}),
     signal:controller.signal
   });
   if(!response.ok || !response.body){
@@ -789,6 +847,7 @@ async function loadArtifacts(){
   syncToolbarForMode();
   updateLivePanel();
   render();
+  renderImagePanel();
 }
 
 document.getElementById('casePicker').addEventListener('change',e=>{
@@ -810,7 +869,7 @@ document.getElementById('modePicker').addEventListener('change',e=>{
   state.mode=e.target.value;
   cancelLiveRun();
   syncToolbarForMode();
-  if(state.mode==='dynamic'){
+  if(state.mode==='dynamic' || state.mode==='dynamic-image'){
     const prompt=document.getElementById('promptInput').value.trim() || state.testsById[state.selectedId].input_text;
     runDynamicGeneration(prompt).catch(error=>{
       document.getElementById('metaLine').textContent='live generation failed';
@@ -822,6 +881,7 @@ document.getElementById('modePicker').addEventListener('change',e=>{
   document.getElementById('metaLine').textContent=`loaded ${state.cases.length} cases from results-2026-03-14.md`;
   updateLivePanel();
   render();
+  renderImagePanel();
 });
 
 document.getElementById('generateBtn').addEventListener('click',()=>{
@@ -834,7 +894,7 @@ document.getElementById('generateBtn').addEventListener('click',()=>{
 });
 
 document.getElementById('replayBtn').addEventListener('click',()=>{
-  if(state.mode!=='dynamic')return;
+  if(state.mode!=='dynamic' && state.mode!=='dynamic-image')return;
   const prompt=(state.live&&state.live.prompt)||document.getElementById('promptInput').value.trim();
   if(!prompt)return;
   runDynamicGeneration(prompt).catch(error=>{
@@ -846,7 +906,7 @@ document.getElementById('replayBtn').addEventListener('click',()=>{
 loadArtifacts().catch(error=>{
   document.getElementById('metaLine').textContent='failed to load eval artifacts';
   document.querySelector('.top').innerHTML=`<div class="error">${error.message}. serve the repo with a local http server before opening proto.html.</div>`;
-  document.getElementById('summaryCards').innerHTML='';
+  document.getElementById('promptCard').innerHTML='';
   document.getElementById('paneA').innerHTML='';
   document.getElementById('paneB').innerHTML='';
   document.getElementById('hint').textContent='load failure';
