@@ -179,6 +179,13 @@ the goal is not "as much precision as possible." the goal is the right level and
 1. "could this sentence describe something else equally well?" if yes, revise until it cannot.
 2. "does this sentence add information not already present in a prior sentence?" if no, merge it into the overlapping sentence or delete it.
 
+**word count awareness** (generative mode, when prompt specifies a target):
+1. after drafting, count words. if over target:
+2. rank each sentence by self-check uniqueness score (how many other things could it describe?)
+3. identify the lowest-scoring sentence. ask: does removing it lose a dimension the description needs? if yes, keep it and try the next-lowest. if no, cut it.
+4. if still over target after cutting cuttable sentences: tighten phrasing (remove qualifiers, compress clauses) rather than dropping dimensions.
+5. **quality gate**: never cut below the point where the description loses a load-bearing distinction. overshooting the word count by 20% is better than losing a dimension that makes the description unique. flag the overrun in the precision report rather than silently degrading.
+
 **both modes**: respect the calibration profile during revision:
 - stay below the vocabulary ceiling unless a required term earns an exception
 - compress or unpack based on the attention budget
